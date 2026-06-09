@@ -42,6 +42,43 @@ Singleton {
             return m ? m[1] : str.trim();
         };
 
+        // Detect if running under Hyprland
+        const isHyprland = (Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase().indexOf("hyprland") !== -1;
+
+        if (isHyprland) {
+            let hyprArgs = [];
+            if (action === "workspace") {
+                hyprArgs = ["workspace", rawArgs];
+            } else if (action === "togglespecialworkspace") {
+                hyprArgs = ["togglespecialworkspace"];
+                if (rawArgs) hyprArgs.push(rawArgs);
+            } else if (action === "closewindow") {
+                hyprArgs = ["closewindow", "address:" + getAddr(rawArgs)];
+            } else if (action === "focuswindow") {
+                hyprArgs = ["focuswindow", "address:" + getAddr(rawArgs)];
+            } else if (action === "movetoworkspacesilent") {
+                let subParts = rawArgs.split(',');
+                let ws = subParts[0].trim();
+                let targetArg = ws;
+                if (subParts.length > 1) {
+                    targetArg += ",address:" + getAddr(subParts[1]);
+                }
+                hyprArgs = ["movetoworkspacesilent", targetArg];
+            }
+
+            if (hyprArgs.length > 0) {
+                let proc = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
+                proc.command = ["hyprctl", "dispatch"].concat(hyprArgs);
+                console.log("AxctlService: dispatching Hyprland command:", JSON.stringify(proc.command));
+                proc.onExited.connect((code) => {
+                    console.log("AxctlService: Hyprland command exited with code:", code);
+                    proc.destroy();
+                });
+                proc.running = true;
+                return;
+            }
+        }
+
         let cmdArgs = [];
 
         if (action === "workspace") {

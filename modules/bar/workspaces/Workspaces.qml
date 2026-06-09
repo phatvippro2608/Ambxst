@@ -299,6 +299,8 @@ Item {
 
         implicitWidth: Math.abs(idx1 - idx2) * workspaceButtonWidth + workspaceButtonWidth - activeWorkspaceMargin * 2
         implicitHeight: workspaceButtonWidth - activeWorkspaceMargin * 2
+        width: implicitWidth
+        height: implicitHeight
 
         radius: {
             const activeWorkspaceId = (monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) || 1;
@@ -355,6 +357,8 @@ Item {
 
         implicitWidth: workspaceButtonWidth - activeWorkspaceMargin * 2
         implicitHeight: Math.abs(idx1 - idx2) * workspaceButtonWidth + workspaceButtonWidth - activeWorkspaceMargin * 2
+        width: implicitWidth
+        height: implicitHeight
 
         radius: {
             const activeWorkspaceId = (monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) || 1;
