@@ -528,6 +528,14 @@ Item {
                             endRadius: root.innerRadius
                         }
 
+                        Bar.PrinterIndicator {
+                            id: printerIndicator
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
+
                         Bar.BatteryIndicator {
                             id: batteryIndicator
                             bar: root
@@ -732,6 +740,14 @@ Item {
                             bar: root
                             layerEnabled: root.shadowsEnabled
                             startRadius: root.outerRadius
+                            endRadius: root.innerRadius
+                        }
+
+                        Bar.PrinterIndicator {
+                            id: printerIndicatorVert
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
                             endRadius: root.innerRadius
                         }
 

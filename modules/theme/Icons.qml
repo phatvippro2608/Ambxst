@@ -162,6 +162,8 @@ QtObject {
     // Misc
     readonly property string accept: ""
     readonly property string cancel: ""
+    readonly property string x: "\ue3e2"
+    readonly property string magnifyingGlass: "\ue3bc"
     readonly property string plus: ""
     readonly property string minus: ""
     readonly property string alert: ""
