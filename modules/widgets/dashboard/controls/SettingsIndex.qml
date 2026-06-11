@@ -114,6 +114,9 @@ QtObject {
         { label: "After Sleep", keywords: "screen on resume idle", section: 7, subSection: "idle", subLabel: "System > Idle", icon: Icons.moon, isIcon: true },
         { label: "Idle Listener", keywords: "timeout brightness screen off suspend", section: 7, subSection: "idle", subLabel: "System > Idle", icon: Icons.moon, isIcon: true },
         
+        // System > Display
+        { label: "Display Configuration", keywords: "display monitor screen resolution external internal mirror extend clone dual multi-monitor", section: 7, subSection: "display", subLabel: "System > Display", icon: Icons.layout, isIcon: true },
+        
         // --- Compositor ---
         { label: "Compositor", keywords: "compositor window manager wm", section: 8, subSection: "", subLabel: "Compositor", icon: Icons.compositor, isIcon: true },
         

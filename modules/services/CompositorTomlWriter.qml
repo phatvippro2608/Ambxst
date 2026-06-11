@@ -284,6 +284,7 @@ Singleton {
                     pushCoreBind(ambxst.system.overview);
                     pushCoreBind(ambxst.system.powermenu);
                     pushCoreBind(ambxst.system.config);
+                    if (ambxst.system.display) pushCoreBind(ambxst.system.display);
                     pushCoreBind(ambxst.system.lockscreen);
                     pushCoreBind(ambxst.system.tools);
                     pushCoreBind(ambxst.system.screenshot);

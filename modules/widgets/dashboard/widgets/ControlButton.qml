@@ -17,8 +17,6 @@ StyledRect {
     property bool isHovered: mouseArea.containsMouse
 
     variant: {
-        if (isActive && isHovered)
-            return "primaryfocus";
         if (isActive)
             return "primary";
         if (isHovered)
@@ -27,6 +25,21 @@ StyledRect {
     }
 
     radius: root.isActive ? Styling.radius(0) : Styling.radius(4)
+
+    // Subtle highlight overlay on hover when active
+    Rectangle {
+        anchors.fill: parent
+        color: Config.lightMode ? "#ffffff" : "#000000"
+        opacity: (root.isActive && root.isHovered) ? 0.15 : 0
+        radius: parent.radius ?? 0
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration / 2
+            }
+        }
+    }
 
     Text {
         anchors.centerIn: parent

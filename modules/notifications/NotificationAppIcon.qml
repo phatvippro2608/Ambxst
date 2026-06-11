@@ -79,7 +79,13 @@ Item {
                 mipmap: true
                 id: appIconImage
                 anchors.fill: parent
-                source: root.appIcon ? "image://icon/" + root.appIcon : ""
+                source: {
+                    if (!root.appIcon) return "";
+                    if (root.appIcon.startsWith("/") || root.appIcon.startsWith("file://")) {
+                        return root.appIcon.startsWith("file://") ? root.appIcon : "file://" + root.appIcon;
+                    }
+                    return "image://icon/" + root.appIcon;
+                }
                 fillMode: Image.PreserveAspectCrop
                 smooth: true
             }
@@ -103,12 +109,20 @@ Item {
                         mipmap: true
                         id: notifImage
                         anchors.fill: parent
-                        source: status === Image.Error && root.appIcon ? "image://icon/" + root.appIcon : root.image
+                        source: status === Image.Error && root.appIcon ? (
+                            (root.appIcon.startsWith("/") || root.appIcon.startsWith("file://")) ? 
+                            (root.appIcon.startsWith("file://") ? root.appIcon : "file://" + root.appIcon) : 
+                            "image://icon/" + root.appIcon
+                        ) : root.image
                         fillMode: Image.PreserveAspectCrop
                         smooth: true
                         onStatusChanged: {
                             if (status === Image.Error && root.appIcon) {
-                                source = "image://icon/" + root.appIcon;
+                                if (root.appIcon.startsWith("/") || root.appIcon.startsWith("file://")) {
+                                    source = root.appIcon.startsWith("file://") ? root.appIcon : "file://" + root.appIcon;
+                                } else {
+                                    source = "image://icon/" + root.appIcon;
+                                }
                                 root.usingAppIconFallback = true;
                             }
                         }
@@ -131,7 +145,13 @@ Item {
             Image {
                 mipmap: true
                 anchors.fill: parent
-                source: root.appIcon ? "image://icon/" + root.appIcon : ""
+                source: {
+                    if (!root.appIcon) return "";
+                    if (root.appIcon.startsWith("/") || root.appIcon.startsWith("file://")) {
+                        return root.appIcon.startsWith("file://") ? root.appIcon : "file://" + root.appIcon;
+                    }
+                    return "image://icon/" + root.appIcon;
+                }
                 fillMode: Image.PreserveAspectCrop
                 smooth: true
             }

@@ -49,7 +49,17 @@ ClippingRectangle {
     readonly property bool hasSolidColor: variantConfig.color !== undefined && variantConfig.color !== ""
 
     readonly property color itemColor: Config.resolveColor(variantConfig.itemColor)
-    property color item: itemColor
+    property color item: {
+        if (Config.lightMode) {
+            if (root.variant === "primaryfocus") {
+                return Colors.primary;
+            }
+            if (root.variant === "tertiaryfocus") {
+                return Colors.tertiary;
+            }
+        }
+        return itemColor;
+    }
 
     readonly property real rectOpacity: backgroundOpacity >= 0 ? backgroundOpacity : variantConfig.opacity
 

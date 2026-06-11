@@ -67,6 +67,15 @@ Item {
                 root.destroyWithAnimation();
             }
         }
+
+        onClicked: mouse => {
+            if (mouse.button === Qt.LeftButton) {
+                if (latestNotification) {
+                    Notifications.attemptInvokeAction(latestNotification.id, "default", true);
+                    root.destroyRequested();
+                }
+            }
+        }
     }
 
     Column {

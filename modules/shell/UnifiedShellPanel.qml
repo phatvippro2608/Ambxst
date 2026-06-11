@@ -158,6 +158,9 @@ PanelWindow {
                 item: notchContent.notchHitbox
             },
             Region {
+                item: (notchContent.satelliteBadgesRef && notchContent.satelliteBadgesRef.visible) ? notchContent.satelliteBadgesRef : null
+            },
+            Region {
                 // Only include the dock hitbox if the dock is actually enabled and visible on this screen.
                 item: dockContent.visible ? dockContent.dockHitbox : null
             },

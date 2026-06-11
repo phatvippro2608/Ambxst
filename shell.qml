@@ -288,6 +288,7 @@ ShellRoot {
                 _ = IdleService.lockCmd; // Force init
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = PrinterService.printers; // Force init
+                _ = DisplayService.toString(); // Force init
             });
         }
     }
@@ -299,6 +300,7 @@ ShellRoot {
         onTriggered: {
             let _ = NightLightService.active;
             _ = GameModeService.toggled;
+            _ = BingWallpaperService.toString();
         }
     }
 }

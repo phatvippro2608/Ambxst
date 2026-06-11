@@ -34,22 +34,9 @@ PanelWindow {
     visible: overviewOpen
     exclusionMode: ExclusionMode.Ignore
 
-    // Mask to capture input on the entire window when open
+    // Mask to capture input on the entire window
     mask: Region {
-        item: overviewOpen ? fullMask : emptyMask
-    }
-
-    // Full screen mask when open
-    Item {
-        id: fullMask
-        anchors.fill: parent
-    }
-
-    // Empty mask when hidden
-    Item {
-        id: emptyMask
-        width: 0
-        height: 0
+        item: backdrop
     }
 
     FocusGrab {
@@ -64,6 +51,17 @@ PanelWindow {
                     Visibilities.setActiveModule("");
                 }
             });
+        }
+    }
+
+    Keys.onReleased: event => {
+        if (event.key === Qt.Key_Super || event.key === Qt.Key_Meta || event.key === Qt.Key_Alt) {
+                            if (GlobalStates.hoveredWorkspaceId !== -1) {
+                                Visibilities.setActiveModule("");
+                                Qt.callLater(() => {
+                                    AxctlService.dispatch(`workspace ${GlobalStates.hoveredWorkspaceId}`);
+                                });
+                            }
         }
     }
 
@@ -94,7 +92,7 @@ PanelWindow {
     Item {
         id: mainContainer
         anchors.centerIn: parent
-        width: Math.max(searchContainer.width, overviewContainer.width + (scrollbarContainer.visible ? scrollbarContainer.width + 8 : 0))
+        width: Math.max(searchContainer.width, overviewContainer.width)
         height: searchContainer.height + 8 + overviewContainer.height
 
         opacity: overviewOpen ? 1 : 0
@@ -192,8 +190,13 @@ PanelWindow {
                     }
 
                     onAccepted: {
-                        if (overviewLoader.item) {
+                        if (searchInput.text.length > 0 && overviewLoader.item) {
                             overviewLoader.item.navigateToSelectedWindow();
+                        } else if (GlobalStates.hoveredWorkspaceId !== -1) {
+                            Visibilities.setActiveModule("");
+                            Qt.callLater(() => {
+                                AxctlService.dispatch(`workspace ${GlobalStates.hoveredWorkspaceId}`);
+                            });
                         }
                     }
 
@@ -273,6 +276,17 @@ PanelWindow {
                             }
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectNextMatch();
+                        }
+                    }
+
+                    onKeyReleased: event => {
+                        if (event.key === Qt.Key_Super || event.key === Qt.Key_Meta || event.key === Qt.Key_Alt) {
+                            if (GlobalStates.hoveredWorkspaceId !== -1) {
+                                Visibilities.setActiveModule("");
+                                Qt.callLater(() => {
+                                    AxctlService.dispatch(`workspace ${GlobalStates.hoveredWorkspaceId}`);
+                                });
+                            }
                         }
                     }
                 }

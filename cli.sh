@@ -29,7 +29,7 @@ ensure_config_files() {
 	mkdir -p "$config_dir"
 
 	# Copy preset files if they don't exist (cp -n = no-clobber)
-	for file in theme bar workspaces overview notch compositor performance desktop lockscreen dock ai; do
+	for file in theme bar workspaces overview notch compositor performance desktop lockscreen dock ai system weather prefix; do
 		cp -n "${preset_dir}/${file}.json" "${config_dir}/${file}.json" 2>/dev/null || true
 	done
 }
@@ -628,6 +628,9 @@ help | --help | -h)
 
 	# Force Qt6CT
 	export QT_QPA_PLATFORMTHEME=qt6ct
+	export QT_QPA_PLATFORM=wayland
+	export QT_SCALE_FACTOR_ROUNDING_POLICY=Round
+	export QML_DISABLE_DISTANCEFIELD=1
 	unset HL_INITIAL_WORKSPACE_TOKEN
 
 	# Cache this script's PID before exec (for fast PID lookups in future CLI calls)

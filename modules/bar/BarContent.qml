@@ -430,9 +430,17 @@ Item {
                                     text: Icons.pin
                                     font.family: Icons.font
                                     font.pixelSize: 18
-                                    color: root.pinned ? pinButtonBg.item : (pinButton.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.foreground))
+                                    color: root.pinned ? pinButtonBg.item : (Styling.srItem("overprimary") || Colors.foreground)
+                                    opacity: pinButton.pressed ? 0.7 : 1.0
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
+
+                                    Behavior on opacity {
+                                        enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
+                                        NumberAnimation {
+                                            duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+                                        }
+                                    }
 
                                     rotation: root.pinned ? 0 : 45
                                     Behavior on rotation {
@@ -692,9 +700,17 @@ Item {
                                             text: Icons.pin
                                             font.family: Icons.font
                                             font.pixelSize: 18
-                                            color: root.pinned ? pinButtonVBg.item : (pinButtonV.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.foreground))
+                                            color: root.pinned ? pinButtonVBg.item : (Styling.srItem("overprimary") || Colors.foreground)
+                                            opacity: pinButtonV.pressed ? 0.7 : 1.0
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
+
+                                            Behavior on opacity {
+                                                enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
+                                                NumberAnimation {
+                                                    duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+                                                }
+                                            }
 
                                             rotation: root.pinned ? 0 : 45
                                             Behavior on rotation {

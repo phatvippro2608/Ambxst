@@ -20,7 +20,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 GIF_EXTENSIONS = {".gif"}
 
 # Default thumbnail size
-THUMBNAIL_SIZE = "140x140"
+THUMBNAIL_SIZE = "300x300"
 
 
 class ThumbnailGenerator:
@@ -167,7 +167,7 @@ class ThumbnailGenerator:
                 "-vframes",
                 "1",  # Extract only 1 frame
                 "-vf",
-                f"scale=140:140:force_original_aspect_ratio=increase,crop=140:140",
+                f"scale=300:300:force_original_aspect_ratio=increase,crop=300:300",
                 "-q:v",
                 "2",  # High quality
                 "-f",
@@ -207,11 +207,11 @@ class ThumbnailGenerator:
                 "convert",
                 str(image_path),
                 "-resize",
-                "140x140^",  # Force resize to exact dimensions
+                "300x300^",  # Force resize to exact dimensions
                 "-gravity",
                 "center",  # Center the crop
                 "-extent",
-                "140x140",  # Crop to exact size
+                "300x300",  # Crop to exact size
                 "-quality",
                 "85",  # High quality JPEG
                 str(thumbnail_path),
@@ -253,7 +253,7 @@ class ThumbnailGenerator:
                 "-vframes",
                 "1",  # Extract only the first frame
                 "-vf",
-                f"scale=140:140:force_original_aspect_ratio=increase,crop=140:140",
+                f"scale=300:300:force_original_aspect_ratio=increase,crop=300:300",
                 "-q:v",
                 "2",  # High quality
                 "-f",

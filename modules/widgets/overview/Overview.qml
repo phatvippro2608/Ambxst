@@ -11,192 +11,160 @@ import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.config
 
-
-
 Item {
     id: overviewRoot
 
-    // Cache config values to avoid repeated lookups
-    readonly property real scale: Config.overview.scale
-    readonly property int rows: Config.overview.rows
-    readonly property int columns: Config.overview.columns
-    readonly property int workspacesShown: rows * columns
-    readonly property real workspaceSpacing: Config.overview.workspaceSpacing
-    readonly property real workspacePadding: 8
-    readonly property color activeBorderColor: Styling.srItem("overprimary")
-
-    // Use the screen's monitor instead of focused monitor for multi-monitor support
-    property var currentScreen: null  // This will be set from parent
-    readonly property var monitor: currentScreen ? AxctlService.monitorFor(currentScreen) : AxctlService.focusedMonitor
-    readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / workspacesShown)
-
-    // Cache these references
-    readonly property var windowList: CompositorData.windowList
-    readonly property var monitors: CompositorData.monitors
+    property var currentScreen: null
+    readonly property string screenName: currentScreen ? (currentScreen.name || currentScreen) : ""
+    readonly property var monitor: {
+        if (screenName !== "") {
+            const mons = CompositorData.monitors || [];
+            for (let i = 0; i < mons.length; i++) {
+                if (mons[i].name === screenName) return mons[i];
+            }
+        }
+        return AxctlService.focusedMonitor;
+    }
     readonly property int monitorId: monitor?.id ?? -1
-    readonly property var monitorData: monitors.find(m => m.id === monitorId) ?? null
+    readonly property real monitorX: currentScreen ? (currentScreen.x || 0) : 0
+    readonly property real monitorY: currentScreen ? (currentScreen.y || 0) : 0
 
+    readonly property var windowList: CompositorData.windowList
     readonly property string barPosition: Config.bar.position
     readonly property var barPanel: monitor ? Visibilities.getBarPanelForScreen(monitor.name) : null
     readonly property bool isBarPinned: barPanel ? barPanel.pinned : (Config.bar.pinnedOnStartup ?? true)
     readonly property int barReserved: isBarPinned ? (Config.showBackground ? 44 : 40) : 0
 
-    // Search functionality (controlled from parent)
+    readonly property real workspaceSpacing: Config.overview.workspaceSpacing || 16
+    readonly property real workspacePadding: 8
+    readonly property color activeBorderColor: Styling.srItem("overprimary")
+
+    readonly property int rows: Config.overview.rows || 2
+    readonly property int columns: Config.overview.columns || 5
+    readonly property int workspacesShown: rows * columns
+    readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / workspacesShown)
+
+    // Generate fixed array of workspaces for the current group
+    readonly property var activeWorkspacesForMonitor: {
+        let wsList = [];
+        let startWs = workspaceGroup * workspacesShown + 1;
+        for (let i = 0; i < workspacesShown; i++) {
+            wsList.push({ id: startWs + i, name: (startWs + i).toString() });
+        }
+        return wsList;
+    }
+    
+    readonly property int totalWorkspaces: workspacesShown
+
+    // Dynamically calculate scale based on how many columns/rows to ensure it fits nicely
+    // Cap the maximum scale so it doesn't become huge
+    readonly property real scale: {
+        let hScale = 0.8 / Math.max(1, columns);
+        let vScale = 0.8 / Math.max(1, rows);
+        let calculated = Math.min(hScale, vScale);
+        return Math.min(Config.overview.scale || 0.15, calculated);
+    }
+
+    readonly property real workspaceImplicitWidth: {
+        if (!monitor) return 200;
+        const isRotated = (monitor.transform % 2 === 1);
+        const monitorScale = monitor.scale || 1.0;
+        const width = isRotated ? (monitor.height || 1920) : (monitor.width || 1920);
+        return Math.max(0, Math.round((width / monitorScale) * scale));
+    }
+
+    readonly property real workspaceImplicitHeight: {
+        if (!monitor) return 150;
+        const isRotated = (monitor.transform % 2 === 1);
+        const monitorScale = monitor.scale || 1.0;
+        const height = isRotated ? (monitor.width || 1080) : (monitor.height || 1080);
+        return Math.max(0, Math.round((height / monitorScale) * scale));
+    }
+
     property string searchQuery: ""
     property var matchingWindows: []
     property int selectedMatchIndex: 0
 
-    // Reset search state
     function resetSearch() {
         searchQuery = "";
         matchingWindows = [];
         selectedMatchIndex = 0;
     }
 
-    // Update matching windows when search query or window list changes
     onSearchQueryChanged: updateMatchingWindows()
     onWindowListChanged: updateMatchingWindows()
 
-    // Fuzzy match: checks if all characters of query appear in order in target
     function fuzzyMatch(query, target) {
-        if (query.length === 0)
-            return true;
-        if (target.length === 0)
-            return false;
-
+        if (query.length === 0) return true;
+        if (target.length === 0) return false;
         let queryIndex = 0;
         for (let i = 0; i < target.length && queryIndex < query.length; i++) {
-            if (target[i] === query[queryIndex]) {
-                queryIndex++;
-            }
+            if (target[i] === query[queryIndex]) queryIndex++;
         }
         return queryIndex === query.length;
     }
 
-    // Score a fuzzy match (higher is better)
     function fuzzyScore(query, target) {
-        if (query.length === 0)
-            return 0;
-        if (target.length === 0)
-            return -1;
-
-        // Exact match gets highest score
-        if (target.includes(query))
-            return 1000 + (100 - target.length);
-
-        // Check for fuzzy match
-        let queryIndex = 0;
-        let consecutiveMatches = 0;
-        let maxConsecutive = 0;
-        let score = 0;
-
+        if (query.length === 0) return 0;
+        if (target.length === 0) return -1;
+        if (target.includes(query)) return 1000 + (100 - target.length);
+        let queryIndex = 0, consecutiveMatches = 0, maxConsecutive = 0, score = 0;
         for (let i = 0; i < target.length && queryIndex < query.length; i++) {
             if (target[i] === query[queryIndex]) {
-                queryIndex++;
-                consecutiveMatches++;
+                queryIndex++; consecutiveMatches++;
                 maxConsecutive = Math.max(maxConsecutive, consecutiveMatches);
-                // Bonus for matches at word boundaries
-                if (i === 0 || target[i - 1] === ' ' || target[i - 1] === '-' || target[i - 1] === '_') {
-                    score += 10;
-                }
-            } else {
-                consecutiveMatches = 0;
-            }
+                if (i === 0 || target[i - 1] === ' ' || target[i - 1] === '-' || target[i - 1] === '_') score += 10;
+            } else { consecutiveMatches = 0; }
         }
-
-        if (queryIndex !== query.length)
-            return -1; // No match
-
+        if (queryIndex !== query.length) return -1;
         return score + maxConsecutive * 5;
     }
 
     function updateMatchingWindows() {
         if (searchQuery.length === 0) {
-            matchingWindows = [];
-            selectedMatchIndex = 0;
-            return;
+            matchingWindows = []; selectedMatchIndex = 0; return;
         }
-
         const query = searchQuery.toLowerCase();
         const matches = windowList.filter(win => {
-            if (!win)
-                return false;
+            if (!win) return false;
             const title = (win.title || "").toLowerCase();
             const windowClass = (win.class || "").toLowerCase();
             return fuzzyMatch(query, title) || fuzzyMatch(query, windowClass);
         }).map(win => ({
-                    window: win,
-                    score: Math.max(fuzzyScore(query, (win.title || "").toLowerCase()), fuzzyScore(query, (win.class || "").toLowerCase()))
-                })).sort((a, b) => b.score - a.score).map(item => item.window);
+            window: win,
+            score: Math.max(fuzzyScore(query, (win.title || "").toLowerCase()), fuzzyScore(query, (win.class || "").toLowerCase()))
+        })).sort((a, b) => b.score - a.score).map(item => item.window);
 
         matchingWindows = matches;
         selectedMatchIndex = matches.length > 0 ? 0 : -1;
     }
 
     function navigateToSelectedWindow() {
-        if (matchingWindows.length === 0 || selectedMatchIndex < 0)
-            return;
-
+        if (matchingWindows.length === 0 || selectedMatchIndex < 0) return;
         const win = matchingWindows[selectedMatchIndex];
-        if (!win)
-            return;
-
-        // Close overview and focus the matched window
+        if (!win) return;
         Visibilities.setActiveModule("", true);
-        Qt.callLater(() => {
-            AxctlService.dispatch(`focuswindow address:${win.address}`);
-        });
+        Qt.callLater(() => { AxctlService.dispatch(`focuswindow address:${win.address}`); });
     }
 
     function selectNextMatch() {
-        if (matchingWindows.length === 0)
-            return;
+        if (matchingWindows.length === 0) return;
         selectedMatchIndex = (selectedMatchIndex + 1) % matchingWindows.length;
     }
 
     function selectPrevMatch() {
-        if (matchingWindows.length === 0)
-            return;
+        if (matchingWindows.length === 0) return;
         selectedMatchIndex = (selectedMatchIndex - 1 + matchingWindows.length) % matchingWindows.length;
     }
 
     function isWindowMatched(windowAddress) {
-        if (searchQuery.length === 0)
-            return false;
+        if (searchQuery.length === 0) return false;
         return matchingWindows.some(win => win?.address === windowAddress);
     }
 
     function isWindowSelected(windowAddress) {
-        if (matchingWindows.length === 0 || selectedMatchIndex < 0)
-            return false;
+        if (matchingWindows.length === 0 || selectedMatchIndex < 0) return false;
         return matchingWindows[selectedMatchIndex]?.address === windowAddress;
-    }
-
-    // Pre-calculate workspace dimensions once
-    readonly property real workspaceImplicitWidth: {
-        if (!monitorData)
-            return 200;
-        const isRotated = (monitorData.transform % 2 === 1);
-        const monitorScale = monitorData.scale || 1.0;
-        const width = isRotated ? (monitor?.height || 1920) : (monitor?.width || 1920);
-        let scaledWidth = (width / monitorScale) * scale;
-        if (barPosition === "left" || barPosition === "right") {
-            scaledWidth -= barReserved * scale;
-        }
-        return Math.max(0, Math.round(scaledWidth));
-    }
-
-    readonly property real workspaceImplicitHeight: {
-        if (!monitorData)
-            return 150;
-        const isRotated = (monitorData.transform % 2 === 1);
-        const monitorScale = monitorData.scale || 1.0;
-        const height = isRotated ? (monitor?.width || 1080) : (monitor?.height || 1080);
-        let scaledHeight = (height / monitorScale) * scale;
-        if (barPosition === "top" || barPosition === "bottom") {
-            scaledHeight -= barReserved * scale;
-        }
-        return Math.max(0, Math.round(scaledHeight));
     }
 
     property int draggingFromWorkspace: -1
@@ -208,89 +176,84 @@ Item {
     Item {
         id: overviewBackground
         anchors.centerIn: parent
-
         implicitWidth: workspaceColumnLayout.implicitWidth
         implicitHeight: workspaceColumnLayout.implicitHeight
 
-        ColumnLayout {
+        GridLayout {
             id: workspaceColumnLayout
             anchors.centerIn: parent
-            spacing: workspaceSpacing
+            rowSpacing: workspaceSpacing
+            columnSpacing: workspaceSpacing
+            columns: overviewRoot.columns
 
             Repeater {
-                model: overviewRoot.rows
-                delegate: RowLayout {
-                    id: row
-                    property int rowIndex: index
-                    spacing: workspaceSpacing
+                model: overviewRoot.activeWorkspacesForMonitor
+                delegate: Rectangle {
+                    id: workspace
+                    property var wsData: modelData
+                    property int workspaceValue: wsData.id
+                    property color defaultWorkspaceColor: Colors.background
+                    property color hoveredWorkspaceColor: Colors.surfaceContainer
+                    property color hoveredBorderColor: Colors.outline
+                    property bool hoveredWhileDragging: false
+                    property bool isHoveredMouse: false
 
-                    Repeater {
-                        model: overviewRoot.columns
-                        Rectangle {
-                            id: workspace
-                            property int colIndex: index
-                            property int workspaceValue: overviewRoot.workspaceGroup * workspacesShown + rowIndex * overviewRoot.columns + colIndex + 1
-                            property color defaultWorkspaceColor: Colors.background
-                            property color hoveredWorkspaceColor: Colors.surfaceContainer
-                            property color hoveredBorderColor: Colors.outline
-                            property bool hoveredWhileDragging: false
+                    implicitWidth: overviewRoot.workspaceImplicitWidth + workspacePadding
+                    implicitHeight: overviewRoot.workspaceImplicitHeight + workspacePadding
+                    color: isHoveredMouse && overviewRoot.draggingTargetWorkspace === -1 ? hoveredWorkspaceColor : "transparent"
+                    radius: Styling.radius(2)
+                    border.width: 2
+                    border.color: hoveredWhileDragging || isHoveredMouse ? hoveredBorderColor : "transparent"
+                    clip: true
 
-                            implicitWidth: overviewRoot.workspaceImplicitWidth + workspacePadding
-                            implicitHeight: overviewRoot.workspaceImplicitHeight + workspacePadding
-                            color: "transparent"
-                            radius: Styling.radius(2)
-                            border.width: 2
-                            border.color: hoveredWhileDragging ? hoveredBorderColor : "transparent"
-                            clip: true
+                    TintedWallpaper {
+                        id: workspaceWallpaper
+                        anchors.fill: parent
+                        radius: Styling.radius(2)
+                        tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
+                        property string lockscreenFramePath: {
+                            if (!GlobalStates.wallpaperManager) return "";
+                            return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
+                        }
+                        source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
+                    }
 
-                            // Wallpaper background for each workspace
-                            TintedWallpaper {
-                                id: workspaceWallpaper
-                                anchors.fill: parent
-                                radius: Styling.radius(2)
-                                tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
-
-                                property string lockscreenFramePath: {
-                                    if (!GlobalStates.wallpaperManager)
-                                        return "";
-                                    return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
-                                }
-
-                                source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        hoverEnabled: true
+                        onEntered: {
+                            parent.isHoveredMouse = true;
+                            GlobalStates.hoveredWorkspaceId = workspaceValue;
+                        }
+                        onExited: {
+                            parent.isHoveredMouse = false;
+                            if (GlobalStates.hoveredWorkspaceId === workspaceValue) {
+                                GlobalStates.hoveredWorkspaceId = -1;
                             }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                acceptedButtons: Qt.LeftButton
-                                onClicked: {
-                                    if (overviewRoot.draggingTargetWorkspace === -1) {
-                                        // Only switch workspace, don't close overview
-                                        AxctlService.dispatch(`workspace ${workspaceValue}`);
-                                    }
-                                }
-                                onDoubleClicked: {
-                                    if (overviewRoot.draggingTargetWorkspace === -1) {
-                                        // Double click closes overview and switches workspace
-                                        Visibilities.setActiveModule("");
-                                        AxctlService.dispatch(`workspace ${workspaceValue}`);
-                                    }
-                                }
+                        }
+                        onClicked: {
+                            if (overviewRoot.draggingTargetWorkspace === -1) {
+                                Visibilities.setActiveModule("");
+                                AxctlService.dispatch(`workspace ${workspaceValue}`);
                             }
+                        }
+                    }
 
-                            DropArea {
-                                anchors.fill: parent
-                                onEntered: {
-                                    overviewRoot.draggingTargetWorkspace = workspaceValue;
-                                    if (overviewRoot.draggingFromWorkspace == overviewRoot.draggingTargetWorkspace)
-                                        return;
-                                    hoveredWhileDragging = true;
-                                }
-                                onExited: {
-                                    hoveredWhileDragging = false;
-                                    if (overviewRoot.draggingTargetWorkspace == workspaceValue)
-                                        overviewRoot.draggingTargetWorkspace = -1;
-                                }
-                            }
+                    DropArea {
+                        anchors.fill: parent
+                        onEntered: {
+                            overviewRoot.draggingTargetWorkspace = workspaceValue;
+                            parent.isHoveredDrag = true;
+                        }
+                        onExited: {
+                            parent.isHoveredDrag = false;
+                            if (overviewRoot.draggingTargetWorkspace == workspaceValue)
+                                overviewRoot.draggingTargetWorkspace = -1;
+                        }
+                        onDropped: drop => {
+                            parent.isHoveredDrag = false;
+                            overviewRoot.draggingTargetWorkspace = -1;
                         }
                     }
                 }
@@ -303,26 +266,23 @@ Item {
             implicitWidth: workspaceColumnLayout.implicitWidth
             implicitHeight: workspaceColumnLayout.implicitHeight
 
-            // Pre-filter windows for this monitor and workspace group
             readonly property var filteredWindowData: {
-                const minWs = overviewRoot.workspaceGroup * overviewRoot.workspacesShown;
-                const maxWs = (overviewRoot.workspaceGroup + 1) * overviewRoot.workspacesShown;
                 const monId = overviewRoot.monitorId;
                 const toplevels = ToplevelManager.toplevels.values;
-
                 return overviewRoot.windowList.filter(win => {
                     const wsId = win?.workspace?.id;
-                    return wsId > minWs && wsId <= maxWs && win.monitor === monId;
+                    const wsMatch = overviewRoot.activeWorkspacesForMonitor.some(ws => ws.id === wsId);
+                    return wsMatch && win.monitor === monId;
                 }).map(win => ({
-                            windowData: win,
-                            toplevel: (() => {
-                                const cls = win.class || "";
-                                if (!cls) return null;
-                                const candidates = toplevels.filter(t => t.appId === cls);
-                                if (candidates.length <= 1) return candidates[0] || null;
-                                return candidates.find(t => t.title === (win.title || "")) || candidates[0];
-                            })()
-                        }));
+                    windowData: win,
+                    toplevel: (() => {
+                        const cls = win.class || "";
+                        if (!cls) return null;
+                        const candidates = toplevels.filter(t => t.appId === cls);
+                        if (candidates.length <= 1) return candidates[0] || null;
+                        return candidates.find(t => t.title === (win.title || "")) || candidates[0];
+                    })()
+                }));
             }
 
             Repeater {
@@ -336,16 +296,17 @@ Item {
                     scale: overviewRoot.scale
                     availableWorkspaceWidth: overviewRoot.workspaceImplicitWidth
                     availableWorkspaceHeight: overviewRoot.workspaceImplicitHeight
-                    monitorData: overviewRoot.monitorData
+                    monitorData: overviewRoot.monitor
+                    monitorX: overviewRoot.monitorX
+                    monitorY: overviewRoot.monitorY
                     barPosition: overviewRoot.barPosition
                     barReserved: overviewRoot.barReserved
 
-                    // Search highlighting
                     isSearchMatch: overviewRoot.isWindowMatched(windowData?.address)
                     isSearchSelected: overviewRoot.isWindowSelected(windowData?.address)
 
-                    property int workspaceColIndex: (windowData?.workspace.id - 1) % overviewRoot.columns
-                    property int workspaceRowIndex: Math.floor((windowData?.workspace.id - 1) % overviewRoot.workspacesShown / overviewRoot.columns)
+                    property int workspaceColIndex: Math.max(0, (windowData?.workspace.id - 1) % overviewRoot.columns)
+                    property int workspaceRowIndex: Math.max(0, Math.floor((windowData?.workspace.id - 1) % overviewRoot.workspacesShown / overviewRoot.columns))
 
                     xOffset: Math.round((overviewRoot.workspaceImplicitWidth + workspacePadding + workspaceSpacing) * workspaceColIndex + workspacePadding / 2)
                     yOffset: Math.round((overviewRoot.workspaceImplicitHeight + workspacePadding + workspaceSpacing) * workspaceRowIndex + workspacePadding / 2)
@@ -358,8 +319,6 @@ Item {
                         }
                     }
                     onWindowClicked: {
-                        // Close overview and focus the specific clicked window
-                        // Skip generic focus restoration since we're handling it specifically
                         Visibilities.setActiveModule("", true);
                         Qt.callLater(() => {
                             AxctlService.dispatch(`focuswindow address:${windowData.address}`);
@@ -373,10 +332,12 @@ Item {
 
             Rectangle {
                 id: focusedWorkspaceIndicator
-                property int activeWorkspaceInGroup: (monitor?.activeWorkspace?.id || 1) - (overviewRoot.workspaceGroup * overviewRoot.workspacesShown)
-                property int activeWorkspaceRowIndex: Math.floor((activeWorkspaceInGroup - 1) / overviewRoot.columns)
-                property int activeWorkspaceColIndex: (activeWorkspaceInGroup - 1) % overviewRoot.columns
+                property int activeWsId: monitor?.activeWorkspace?.id || 1
+                property int wsIndex: overviewRoot.activeWorkspacesForMonitor.findIndex(ws => ws.id === activeWsId)
+                property int activeWorkspaceRowIndex: Math.max(0, Math.floor(wsIndex / overviewRoot.columns))
+                property int activeWorkspaceColIndex: Math.max(0, wsIndex % overviewRoot.columns)
 
+                visible: wsIndex !== -1
                 x: Math.round((overviewRoot.workspaceImplicitWidth + workspacePadding + workspaceSpacing) * activeWorkspaceColIndex)
                 y: Math.round((overviewRoot.workspaceImplicitHeight + workspacePadding + workspaceSpacing) * activeWorkspaceRowIndex)
                 width: Math.round(overviewRoot.workspaceImplicitWidth + workspacePadding)
@@ -386,20 +347,8 @@ Item {
                 border.width: 2
                 border.color: overviewRoot.activeBorderColor
 
-                Behavior on x {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
-                Behavior on y {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
+                Behavior on x { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
+                Behavior on y { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
             }
         }
     }

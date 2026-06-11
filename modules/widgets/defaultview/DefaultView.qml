@@ -105,27 +105,6 @@ Item {
         }
     }
 
-    Column {
-        anchors.fill: parent
-        spacing: 0
-
-        // If bottom position, we populate content bottom-up.
-        // But Column fills top-down. 
-        // We can move the mainRow to the bottom of this Column or use a different layout strategy.
-        // Easiest is to reverse the visual order by using move property or just conditionally rendering order? 
-        // QML items can be reordered visually? No.
-        // We can use States or just conditional anchoring if not using Column.
-        // But this uses Column.
-
-        // Reorder children based on position:
-        // Top: mainRow then notificationContainer
-        // Bottom: notificationContainer then mainRow
-        
-        // Since we cannot dynamically reorder children in a Column easily without Repeater/Loader tricks,
-        // we can use Item + Anchors instead of Column for full control.
-        
-    }
-
     Item {
         anchors.fill: parent
 

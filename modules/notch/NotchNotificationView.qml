@@ -371,6 +371,17 @@ Item {
 
                         property var notification
 
+                        MouseArea {
+                            id: clickArea
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            onClicked: {
+                                if (notification) {
+                                    Notifications.attemptInvokeAction(notification.id, "default", true);
+                                }
+                            }
+                        }
+
                         Column {
                             id: notificationContent
                             width: parent.width

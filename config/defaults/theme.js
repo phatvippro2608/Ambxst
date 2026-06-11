@@ -3,6 +3,8 @@
 var data = {
     "oledMode": false,
     "lightMode": false,
+    "bingWallpaperEnabled": false,
+    "bingWallpaperMode": "daily",
     "roundness": 16,
     "font": "Roboto Condensed",
     "fontSize": 14,

@@ -165,6 +165,10 @@ Singleton {
     readonly property bool launcherOpen: getActiveLauncher()
     readonly property bool dashboardOpen: getActiveDashboard()
 
+    // Hovered window address in overview
+    property string hoveredWindowAddress: ""
+    property int hoveredWorkspaceId: -1
+
     // Lockscreen state
     property bool lockscreenVisible: false
 
@@ -354,7 +358,7 @@ Singleton {
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList", "keepHidden"],
         "lockscreen": ["position"],
         "desktop": ["enabled", "iconSize", "spacingVertical", "textColor"],
-        "system": ["idle", "ocr"]
+        "system": ["idle", "ocr", "display"]
     }
 
     // Create a deep copy of the current shell config
@@ -411,6 +415,12 @@ Singleton {
                     for (var k = 0; k < keys.length; k++) {
                         var key = keys[k];
                         Config.system.ocr[key] = val[key];
+                    }
+                }
+                // Special handling for system.display (JsonObject)
+                else if (section === "system" && prop === "display" && val) {
+                    if (Config.system.display) {
+                        Config.system.display.mode = val.mode || "extend";
                     }
                 }
                 // Deep copy arrays or objects

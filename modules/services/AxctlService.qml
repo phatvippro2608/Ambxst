@@ -240,7 +240,7 @@ Singleton {
                     parsedJson.data = parsedJson.params;
                     root.rawEvent(parsedJson);
                 } catch (e) {
-                    console.error("AxctlService subscribe JSON parse error:", e);
+                    console.error("AxctlService subscribe JSON parse error:", e, "on data:", JSON.stringify(data));
                 }
             }
         }

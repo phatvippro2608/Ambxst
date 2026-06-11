@@ -85,6 +85,8 @@ Singleton {
             "cp -n '" + root.presetDir + "/dock.json' '" + root.configDir + "/dock.json' 2>/dev/null || true; " +
             "cp -n '" + root.presetDir + "/ai.json' '" + root.configDir + "/ai.json' 2>/dev/null || true; " +
             "cp -n '" + root.presetDir + "/system.json' '" + root.configDir + "/system.json' 2>/dev/null || true; " +
+            "cp -n '" + root.presetDir + "/weather.json' '" + root.configDir + "/weather.json' 2>/dev/null || true; " +
+            "cp -n '" + root.presetDir + "/prefix.json' '" + root.configDir + "/prefix.json' 2>/dev/null || true; " +
             "echo 'Preset files copied if missing'"
         ]
     }
@@ -133,6 +135,8 @@ Singleton {
         adapter: JsonAdapter {
             property bool oledMode: false
             property bool lightMode: false
+            property bool bingWallpaperEnabled: false
+            property string bingWallpaperMode: "daily"
             property int roundness: 16
             property string font: "Roboto Condensed"
             property int fontSize: 14
@@ -1005,6 +1009,9 @@ Singleton {
         adapter: JsonAdapter {
             property list<string> disks: ["/"]
             property bool updateServiceEnabled: true
+            property JsonObject display: JsonObject {
+                property string mode: "extend"
+            }
             property JsonObject idle: JsonObject {
                 property JsonObject general: JsonObject {
                     property string lock_cmd: "ambxst lock"
@@ -1452,6 +1459,7 @@ Singleton {
                     property string key: "C"
                     property var action: ({ "id": "ambxst.config", "args": {} })
                 }
+
                 property JsonObject lockscreen: JsonObject {
                     property list<string> modifiers: ["SUPER"]
                     property string key: "L"

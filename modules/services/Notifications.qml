@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
+import qs.modules.services
 
 Singleton {
     id: root
@@ -138,7 +139,9 @@ Singleton {
 
     property bool silent: false
     property list<Notif> list: []
+    property alias notifications: root.list
     property var popupList: list.filter(notif => notif.popup)
+    property var popupNotifications: root.popupList
     property bool popupInhibited: silent
     property var latestTimeForApp: ({})
     property var totalCounts: ({})  // Conteo total independiente del almacenamiento: {appName: {summary: count}}
@@ -470,11 +473,14 @@ Singleton {
 
     function attemptInvokeAction(id, notifIdentifier, autoDiscard = true) {
         const notifIndex = root.list.findIndex(notif => notif.id === id);
+        let actionInvoked = false;
+
         if (notifIndex !== -1) {
             const localHandlers = root.list[notifIndex].localActionHandlers || {};
             const localHandler = localHandlers[notifIdentifier];
             if (typeof localHandler === "function") {
                 localHandler(id);
+                actionInvoked = true;
             }
         }
 
@@ -484,8 +490,138 @@ Singleton {
             const action = notifServerNotif.actions.find(action => action.identifier === notifIdentifier);
             if (action) {
                 action.invoke();
+                actionInvoked = true;
             }
         }
+
+        // Apply custom fallbacks for clicking the notification banner ("default" action)
+        if (notifIdentifier === "default" && !actionInvoked && notifIndex !== -1) {
+            const notif = root.list[notifIndex];
+            const appNameLower = (notif.appName || "").toLowerCase();
+            const summaryLower = (notif.summary || "").toLowerCase();
+            const bodyLower = (notif.body || "").toLowerCase();
+
+            // Detect if this is a screenshot notification
+            const isScreenshot = appNameLower.includes("screenshot") || 
+                                 appNameLower.includes("chụp màn") ||
+                                 summaryLower.includes("screenshot") || 
+                                 summaryLower.includes("chụp màn") ||
+                                 bodyLower.includes("đã lưu toàn màn hình") ||
+                                 bodyLower.includes("vùng chọn") ||
+                                 bodyLower.includes("chụp màn");
+
+            if (isScreenshot) {
+                // Try to find file path in image, appIcon, or body
+                let filePath = "";
+                if (notif.image && (notif.image.startsWith("/") || notif.image.startsWith("file://"))) {
+                    filePath = notif.image;
+                } else if (notif.appIcon && (notif.appIcon.startsWith("/") || notif.appIcon.startsWith("file://"))) {
+                    filePath = notif.appIcon;
+                } else if (notif.body) {
+                    const fileMatch = notif.body.match(/(file:\/\/\/[^\s'"]+|(?:\/[^\s'"]+)+)/);
+                    if (fileMatch) {
+                        filePath = fileMatch[0];
+                    }
+                }
+
+                if (filePath) {
+                    let cleanTarget = filePath;
+                    if (cleanTarget.startsWith("file://")) {
+                        cleanTarget = cleanTarget.replace(/^file:\/\/\/?/, "/");
+                    }
+                    Screenshot.launchEditor(cleanTarget);
+                    actionInvoked = true;
+                } else {
+                    // Fallback: Open the newest screenshot from ~/Pictures/Screenshots or ~/Pictures
+                    const openNewestCmd = "file=$(ls -td ~/Pictures/Screenshots/*.png ~/Pictures/*.png 2>/dev/null | head -n 1); [ -n \"$file\" ] && (if command -v gradia >/dev/null; then gradia \"$file\"; elif command -v swappy >/dev/null; then swappy -f \"$file\"; elif command -v satty >/dev/null; then satty -f \"$file\"; elif command -v gimp >/dev/null; then gimp \"$file\"; else flatpak run be.alexandervanhee.gradia \"$file\"; fi)";
+                    const p = Qt.createQmlObject('import Quickshell.Io; Process { }', root);
+                    p.command = ["bash", "-c", openNewestCmd];
+                    p.onExited.connect(() => p.destroy());
+                    p.running = true;
+                    actionInvoked = true;
+                }
+            }
+
+            // 1. Check for local file path or URL for other notifications
+            if (!actionInvoked) {
+                let target = "";
+                if (notif.image && (notif.image.startsWith("/") || notif.image.startsWith("file://"))) {
+                    target = notif.image;
+                } else if (notif.appIcon && (notif.appIcon.startsWith("/") || notif.appIcon.startsWith("file://"))) {
+                    target = notif.appIcon;
+                } else if (notif.body) {
+                    const urlMatch = notif.body.match(/(https?:\/\/[^\s'"]+)/) || 
+                                     notif.summary.match(/(https?:\/\/[^\s'"]+)/);
+                    if (urlMatch) {
+                        target = urlMatch[0];
+                    } else {
+                        const fileMatch = notif.body.match(/(file:\/\/\/[^\s'"]+|(?:\/[^\s'"]+)+)/);
+                        if (fileMatch) {
+                            target = fileMatch[0];
+                        }
+                    }
+                }
+
+                if (target) {
+                    let cleanTarget = target;
+                    if (cleanTarget.startsWith("file://")) {
+                        cleanTarget = cleanTarget.replace(/^file:\/\/\/?/, "/");
+                    }
+                    Quickshell.execDetached(["xdg-open", cleanTarget]);
+                    actionInvoked = true;
+                }
+            }
+
+            // 2. Fallback to focus or launch the sending application
+            if (!actionInvoked && notif.appName && appNameLower !== "notify-send") {
+                const clients = AxctlService.clients.values || [];
+
+                let bestClient = null;
+                for (let i = 0; i < clients.length; i++) {
+                    const c = clients[i];
+                    const cClass = (c.class || "").toLowerCase();
+                    const cTitle = (c.title || "").toLowerCase();
+
+                    if (cClass === appNameLower || cClass.includes(appNameLower) || appNameLower.includes(cClass)) {
+                        bestClient = c;
+                        break;
+                    }
+                    if (cTitle.includes(appNameLower) || cTitle.includes(notif.summary.toLowerCase())) {
+                        bestClient = c;
+                    }
+                }
+
+                if (bestClient) {
+                    AxctlService.dispatch("focuswindow " + bestClient.address);
+                    actionInvoked = true;
+                } else {
+                    const appList = AppSearch.list || [];
+                    let bestDesktopEntry = null;
+
+                    for (let i = 0; i < appList.length; i++) {
+                        const app = appList[i];
+                        const nameLower = (app.name || "").toLowerCase();
+                        const idLower = (app.id || "").toLowerCase();
+
+                        if (nameLower === appNameLower || idLower === appNameLower || idLower === appNameLower + ".desktop") {
+                            bestDesktopEntry = app;
+                            break;
+                        }
+
+                        if (nameLower.includes(appNameLower) || appNameLower.includes(nameLower) ||
+                            idLower.includes(appNameLower) || idLower.includes(appNameLower + ".desktop")) {
+                            bestDesktopEntry = app;
+                        }
+                    }
+
+                    if (bestDesktopEntry) {
+                        AppSearch.launchApp(bestDesktopEntry);
+                        actionInvoked = true;
+                    }
+                }
+            }
+        }
+
         if (autoDiscard) {
             root.discardNotification(id);
         }

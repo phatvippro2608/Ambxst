@@ -38,6 +38,7 @@ StyledRect {
     signal pageUpPressed
     signal homePressed
     signal endPressed
+    signal keyReleased(var event)
 
     function focusInput() {
         textField.forceActiveFocus();
@@ -168,6 +169,10 @@ StyledRect {
                     root.endPressed();
                     event.accepted = true;
                 }
+            }
+
+            Keys.onReleased: event => {
+                root.keyReleased(event);
             }
         }
     }

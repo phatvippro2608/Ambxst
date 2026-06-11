@@ -341,6 +341,43 @@ FocusScope {
                 }
             }
 
+            // Scheme Selector a la derecha
+            Item {
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 48
+
+                SchemeSelector {
+                    id: schemeSelector
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    // No height set, allows expansion based on implicitHeight
+
+                    onSchemeSelectorClosed: {
+                        wallpapersTabRoot.focusSearch();
+                    }
+
+                    onEscapePressedOnScheme: {
+                        wallpapersTabRoot.focusSearch();
+                    }
+
+                    onTabPressed: {
+                        wallpapersTabRoot.focusNextElement();
+                    }
+
+                    onShiftTabPressed: {
+                        wallpapersTabRoot.focusPreviousElement();
+                    }
+                }
+            }
+        }
+
+        // RowLayout 2: Wallpaper controls and options
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 48
+            spacing: 8
+
             // Per-Screen Monitor toggle
             Item {
                 id: perScreenCheckboxContainer
@@ -769,37 +806,240 @@ FocusScope {
                 }
             }
 
-            // Spacer
-            // Item { Layout.fillWidth: true }
-
-            // Scheme Selector a la derecha
+            // Auto Bing
             Item {
-                Layout.preferredWidth: 200
+                id: bingCheckboxContainer
+                Layout.preferredWidth: 120
                 Layout.preferredHeight: 48
 
-                SchemeSelector {
-                    id: schemeSelector
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    // No height set, allows expansion based on implicitHeight
+                property bool keyboardNavigationActive: false
 
-                    onSchemeSelectorClosed: {
-                        wallpapersTabRoot.focusSearch();
-                    }
+                StyledRect {
+                    variant: bingCheckboxContainer.keyboardNavigationActive && bingCheckbox.activeFocus ? "focus" : "pane"
+                    anchors.fill: parent
+                    radius: Styling.radius(4)
+                    opacity: 1.0
 
-                    onEscapePressedOnScheme: {
-                        wallpapersTabRoot.focusSearch();
-                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 4
 
-                    onTabPressed: {
-                        wallpapersTabRoot.focusNextElement();
-                    }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: Colors.background
+                            radius: Styling.radius(0)
 
-                    onShiftTabPressed: {
-                        wallpapersTabRoot.focusPreviousElement();
+                            Text {
+                                anchors.fill: parent
+                                text: "Auto Bing"
+                                color: Colors.overSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Medium
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: 8
+                            }
+                        }
+
+                        Item {
+                            id: bingCheckbox
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+
+                            property bool checked: Config.theme.bingWallpaperEnabled
+
+                            onActiveFocusChanged: {
+                                if (!activeFocus) {
+                                    bingCheckboxContainer.keyboardNavigationActive = false;
+                                }
+                            }
+
+                            Keys.onPressed: event => {
+                                if (event.key === Qt.Key_Tab) {
+                                    bingCheckboxContainer.keyboardNavigationActive = false;
+                                    if (event.modifiers & Qt.ShiftModifier) {
+                                        wallpapersTabRoot.focusPreviousElement();
+                                    } else {
+                                        wallpapersTabRoot.focusNextElement();
+                                    }
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                    Config.theme.bingWallpaperEnabled = !Config.theme.bingWallpaperEnabled;
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Escape) {
+                                    bingCheckboxContainer.keyboardNavigationActive = false;
+                                    focusSearch();
+                                    event.accepted = true;
+                                }
+                            }
+
+                            Connections {
+                                target: Config.theme
+                                function onBingWallpaperEnabledChanged() {
+                                    bingCheckbox.checked = Config.theme.bingWallpaperEnabled;
+                                }
+                            }
+
+                            Item {
+                                anchors.fill: parent
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    color: Colors.background
+                                    visible: !bingCheckbox.checked
+                                }
+
+                                StyledRect {
+                                    variant: "primary"
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    visible: bingCheckbox.checked
+                                    opacity: bingCheckbox.checked ? 1.0 : 0.0
+
+                                    Behavior on opacity {
+                                        enabled: Config.animDuration > 0
+                                        NumberAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: Icons.accept
+                                        color: Styling.srItem("primary")
+                                        font.family: Icons.font
+                                        font.pixelSize: 20
+                                        scale: bingCheckbox.checked ? 1.0 : 0.0
+
+                                        Behavior on scale {
+                                            enabled: Config.animDuration > 0
+                                            NumberAnimation {
+                                                duration: Config.animDuration / 2
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.5
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    Config.theme.bingWallpaperEnabled = !Config.theme.bingWallpaperEnabled;
+                                }
+                            }
+                        }
                     }
                 }
+            }
+
+            // Bing Mode
+            Item {
+                id: bingModeContainer
+                Layout.preferredWidth: 110
+                Layout.preferredHeight: 48
+                visible: Config.theme.bingWallpaperEnabled
+
+                property bool keyboardNavigationActive: false
+
+                StyledRect {
+                    variant: bingModeContainer.keyboardNavigationActive && bingModeButton.activeFocus ? "focus" : "pane"
+                    anchors.fill: parent
+                    radius: Styling.radius(4)
+                    opacity: 1.0
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 4
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: Colors.background
+                            radius: Styling.radius(0)
+
+                            Text {
+                                anchors.fill: parent
+                                text: Config.theme.bingWallpaperMode === "random" ? "Random" : "Daily"
+                                color: Colors.overSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Medium
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+
+                        Item {
+                            id: bingModeButton
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+
+                            onActiveFocusChanged: {
+                                if (!activeFocus) {
+                                    bingModeContainer.keyboardNavigationActive = false;
+                                }
+                            }
+
+                            Keys.onPressed: event => {
+                                if (event.key === Qt.Key_Tab) {
+                                    bingModeContainer.keyboardNavigationActive = false;
+                                    if (event.modifiers & Qt.ShiftModifier) {
+                                        wallpapersTabRoot.focusPreviousElement();
+                                    } else {
+                                        wallpapersTabRoot.focusNextElement();
+                                    }
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                    Config.theme.bingWallpaperMode = Config.theme.bingWallpaperMode === "random" ? "daily" : "random";
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Escape) {
+                                    bingModeContainer.keyboardNavigationActive = false;
+                                    focusSearch();
+                                    event.accepted = true;
+                                }
+                            }
+
+                            Item {
+                                anchors.fill: parent
+
+                                StyledRect {
+                                    variant: "primary"
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: Config.theme.bingWallpaperMode === "random" ? Icons.shuffle : Icons.clock
+                                        color: Styling.srItem("primary")
+                                        font.family: Icons.font
+                                        font.pixelSize: 20
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    Config.theme.bingWallpaperMode = Config.theme.bingWallpaperMode === "random" ? "daily" : "random";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pushes everything to the left
+            Item {
+                Layout.fillWidth: true
             }
         }
 

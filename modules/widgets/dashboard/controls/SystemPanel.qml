@@ -142,6 +142,10 @@ Item {
                             text: "Idle"
                             sectionId: "idle"
                         }
+                        SectionButton {
+                            text: "Display"
+                            sectionId: "display"
+                        }
                     }
 
                     // =====================
@@ -791,6 +795,103 @@ Item {
                                     });
                                     Config.system.idle.listeners = list;
                                     GlobalStates.markShellChanged();
+                                }
+                            }
+                        }
+                    }
+
+                    // =====================
+                    // DISPLAY SECTION
+                    // =====================
+                    ColumnLayout {
+                        visible: root.currentSection === "display"
+                        property string settingsSection: "display"
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: "Display Configuration"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            font.weight: Font.Medium
+                            color: Colors.overSurfaceVariant
+                            Layout.bottomMargin: -4
+                        }
+
+                        Text {
+                            text: "Select multi-monitor display mode"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-2)
+                            color: Colors.overSurfaceVariant
+                            opacity: 0.7
+                            Layout.bottomMargin: 8
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            ColumnLayout {
+                                spacing: 8
+                                Layout.fillWidth: true
+
+                                Repeater {
+                                    model: [
+                                        { id: "extend", label: "Extend Displays", desc: "Use all connected monitors as one large desktop" },
+                                        { id: "mirror", label: "Mirror / Clone", desc: "Mirror internal screen content to external monitors" },
+                                        { id: "internal", label: "Internal Only", desc: "Turn off external screens and use laptop display only" },
+                                        { id: "external", label: "External Only", desc: "Turn off laptop display and use external screen(s)" }
+                                    ]
+
+                                    delegate: StyledRect {
+                                        id: modeButton
+                                        required property var modelData
+                                        required property int index
+
+                                        property bool isSelected: Config.system.display ? (Config.system.display.mode === modelData.id) : (modelData.id === "extend")
+                                        property bool isHovered: false
+
+                                        variant: isSelected ? "primary" : (isHovered ? "focus" : "common")
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 52
+                                        radius: Styling.radius(-2)
+
+                                        ColumnLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 10
+                                            spacing: 2
+
+                                            Text {
+                                                text: modeButton.modelData.label
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Styling.fontSize(0)
+                                                font.weight: modeButton.isSelected ? Font.Bold : Font.Normal
+                                                color: modeButton.item
+                                            }
+
+                                            Text {
+                                                text: modeButton.modelData.desc
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Styling.fontSize(-2)
+                                                color: modeButton.item
+                                                opacity: 0.7
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onEntered: modeButton.isHovered = true
+                                            onExited: modeButton.isHovered = false
+                                            onClicked: {
+                                                if (Config.system.display) {
+                                                    Config.system.display.mode = modeButton.modelData.id;
+                                                    GlobalStates.markShellChanged();
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

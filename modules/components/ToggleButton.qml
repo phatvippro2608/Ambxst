@@ -43,7 +43,7 @@ Button {
 
         Rectangle {
             anchors.fill: parent
-            color: parent.item || "transparent"
+            color: Styling.srItem("overprimary")
             opacity: root.pressed ? 0.5 : (root.hovered ? 0.25 : 0)
             radius: parent.radius ?? 0
 
@@ -57,6 +57,15 @@ Button {
     }
 
     contentItem: Item {
+        opacity: root.pressed ? 0.7 : 1.0
+
+        Behavior on opacity {
+            enabled: (Config.animDuration ?? 0) > 0
+            NumberAnimation {
+                duration: (Config.animDuration ?? 0) / 2
+            }
+        }
+
         // Text icon (single character)
         Text {
             visible: !root.isIconPath
@@ -65,7 +74,7 @@ Button {
             textFormat: Text.RichText
             font.family: Icons.font
             font.pixelSize: 18
-            color: root.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.foreground)
+            color: Styling.srItem("overprimary") || Colors.foreground
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }
@@ -98,6 +107,12 @@ Button {
     }
 
     onClicked: root.onToggle()
+
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        acceptedButtons: Qt.NoButton
+    }
 
     ToolTip.visible: false
     ToolTip.text: root.tooltipText

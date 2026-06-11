@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.globals
+import qs.modules.services
 
 QtObject {
     id: root
@@ -190,6 +191,28 @@ QtObject {
                 } else {
                     copyProcess.running = true
                     root.imageSaved(root.finalPath)
+
+                    Notifications.notifyInternal({
+                        appName: "Screenshot",
+                        summary: "Screenshot Saved",
+                        body: root.finalPath,
+                        image: "file://" + root.finalPath,
+                        actions: [
+                            { identifier: "edit", text: "Edit" },
+                            { identifier: "open_folder", text: "Open Folder" }
+                        ],
+                        actionHandlers: {
+                            "default": function() {
+                                root.launchEditor(root.finalPath);
+                            },
+                            "edit": function() {
+                                root.launchEditor(root.finalPath);
+                            },
+                            "open_folder": function() {
+                                root.openFolder(root.finalPath);
+                            }
+                        }
+                    });
                 }
             } else {
                 root.errorOccurred("Failed to save image")
@@ -448,5 +471,20 @@ QtObject {
                 root.errorOccurred("Image file not ready for Google Lens")
             }
         }
+    }
+
+    function launchEditor(path) {
+        if (!path) return;
+        const cmd = [
+            "bash", "-c",
+            `if command -v gradia >/dev/null; then gradia "${path}"; elif command -v swappy >/dev/null; then swappy -f "${path}"; elif command -v satty >/dev/null; then satty -f "${path}"; elif command -v gimp >/dev/null; then gimp "${path}"; else flatpak run be.alexandervanhee.gradia "${path}"; fi`
+        ];
+        Quickshell.execDetached(cmd);
+    }
+
+    function openFolder(path) {
+        if (!path) return;
+        const dir = path.substring(0, path.lastIndexOf('/'));
+        Quickshell.execDetached(["xdg-open", dir]);
     }
 }

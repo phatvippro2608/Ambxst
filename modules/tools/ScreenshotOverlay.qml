@@ -222,15 +222,12 @@ PanelWindow {
             ActionButton {
                 icon: Icons.edit
                 onTriggered: {
-                    // Open with Gradia (native or Flatpak for Fedora) detached
-                    var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
-                    proc.command = ["bash", "-c", "if command -v gradia >/dev/null; then gradia \"" + root.imagePath + "\"; else flatpak run be.alexandervanhee.gradia \"" + root.imagePath + "\"; fi & disown"];
-                    proc.running = true;
+                    Screenshot.launchEditor(root.imagePath);
                     root.imagePath = "";
                 }
                 StyledToolTip {
                     show: parent.containsMouse
-                    tooltipText: "Edit with Gradia"
+                    tooltipText: "Edit"
                 }
             }
 

@@ -24,6 +24,13 @@ Item {
     readonly property bool frameWrapped: frameEnabled && GlobalStates.assistantPinned
     readonly property int sidebarMargin: frameWrapped ? 0 : 4
     property bool wantsFocus: false
+    property bool isReady: false
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            isReady = true;
+        });
+    }
     property bool menuExpanded: false
     property real menuWidth: 250
     property var slashCommands: [
@@ -150,15 +157,7 @@ Item {
             return root.active ? parent.width - width : parent.width;
         }
 
-        visible: root.active || slideAnimation.running
-
-        Behavior on x {
-            NumberAnimation {
-                id: slideAnimation
-                duration: Config.animDuration
-                easing.type: Easing.OutCubic
-            }
-        }
+        visible: root.active
 
         StyledRect {
             anchors.fill: parent
