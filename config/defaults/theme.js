@@ -3,6 +3,7 @@
 var data = {
     "oledMode": false,
     "lightMode": false,
+    "enableLunarCalendar": false,
     "bingWallpaperEnabled": false,
     "bingWallpaperMode": "daily",
     "roundness": 16,

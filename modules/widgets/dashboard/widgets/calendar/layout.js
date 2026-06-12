@@ -1,3 +1,5 @@
+.import "lunar_calendar.js" as Lunar
+
 var weekDays = [ // MONDAY IS THE FIRST DAY OF THE WEEK :HESRIGHTYOUKNOW:
     { day: 'Mo', today: 0 },
     { day: 'Tu', today: 0 },
@@ -7,6 +9,17 @@ var weekDays = [ // MONDAY IS THE FIRST DAY OF THE WEEK :HESRIGHTYOUKNOW:
     { day: 'Sa', today: 0 },
     { day: 'Su', today: 0 },
 ]
+
+const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+
+function getYearCanChi(lunarYear) {
+    var canIdx = (lunarYear - 4) % 10;
+    if (canIdx < 0) canIdx += 10;
+    var chiIdx = (lunarYear - 4) % 12;
+    if (chiIdx < 0) chiIdx += 12;
+    return CAN[canIdx] + " " + CHI[chiIdx];
+}
 
 function checkLeapYear(year) {
     return (
@@ -23,21 +36,23 @@ function getMonthDays(month, year) {
 }
 
 function getNextMonthDays(month, year) {
-    const leapYear = checkLeapYear(year);
-    if (month == 1 && leapYear) return 29;
-    if (month == 1 && !leapYear) return 28;
-    if (month == 12) return 31;
-    if ((month <= 7 && month % 2 == 1) || (month >= 8 && month % 2 == 0)) return 30;
-    return 31;
+    var nextMonth = month + 1;
+    var nextYear = year;
+    if (nextMonth == 13) {
+        nextMonth = 1;
+        nextYear++;
+    }
+    return getMonthDays(nextMonth, nextYear);
 }
 
 function getPrevMonthDays(month, year) {
-    const leapYear = checkLeapYear(year);
-    if (month == 3 && leapYear) return 29;
-    if (month == 3 && !leapYear) return 28;
-    if (month == 1) return 31;
-    if ((month <= 7 && month % 2 == 1) || (month >= 8 && month % 2 == 0)) return 30;
-    return 31;
+    var prevMonth = month - 1;
+    var prevYear = year;
+    if (prevMonth == 0) {
+        prevMonth = 12;
+        prevYear--;
+    }
+    return getMonthDays(prevMonth, prevYear);
 }
 
 function getDateInXMonthsTime(x, baseDate) {
@@ -86,12 +101,52 @@ function getCalendarLayout(dateObject, highlight) {
     var i = 0, j = 0;
     var currentWeekRow = -1;
     while (i < 6 && j < 7) {
+        var cellMonth = month + monthDiff;
+        var cellYear = year;
+        if (cellMonth == 0) {
+            cellMonth = 12;
+            cellYear--;
+        } else if (cellMonth == 13) {
+            cellMonth = 1;
+            cellYear++;
+        }
+        var cellDay = toFill;
+
+        var lunarDayVal = 0;
+        var lunarMonthVal = 0;
+        var lunarYearVal = 0;
+        var lunarLeapVal = 0;
+        var lunarText = "";
+        try {
+            var lunarData = Lunar.convertSolar2Lunar(cellDay, cellMonth, cellYear, 7.0);
+            lunarDayVal = lunarData[0];
+            lunarMonthVal = lunarData[1];
+            lunarYearVal = lunarData[2];
+            lunarLeapVal = lunarData[3];
+
+            if (lunarDayVal === 1) {
+                lunarText = "1/" + lunarMonthVal + (lunarLeapVal ? "b" : "");
+            } else {
+                lunarText = lunarDayVal.toString();
+            }
+        } catch (err) {
+            console.log("Error converting solar to lunar in layout.js:", err);
+        }
+
         calendar[i][j] = {
             "day": toFill,
             "today": ((toFill == day && monthDiff == 0 && highlight) ? 1 : (
                 monthDiff == 0 ? 0 :
                     -1
-            ))
+            )),
+            "cellDay": cellDay,
+            "cellMonth": cellMonth,
+            "cellYear": cellYear,
+            "lunarDay": lunarDayVal,
+            "lunarMonth": lunarMonthVal,
+            "lunarYear": lunarYearVal,
+            "lunarLeap": lunarLeapVal,
+            "lunarText": lunarText
         };
         if (toFill == day && monthDiff == 0 && highlight) {
             currentWeekRow = i;

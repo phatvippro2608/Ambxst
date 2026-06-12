@@ -135,6 +135,7 @@ Singleton {
         adapter: JsonAdapter {
             property bool oledMode: false
             property bool lightMode: false
+            property bool enableLunarCalendar: false
             property bool bingWallpaperEnabled: false
             property string bingWallpaperMode: "daily"
             property int roundness: 16

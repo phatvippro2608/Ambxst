@@ -30,7 +30,7 @@ NotchAnimationBehavior {
     readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // unified launcher tab is wider
 
     implicitWidth: nonAnimWidth
-    implicitHeight: 430
+    implicitHeight: 550
 
     // Track which tabs have been loaded (for lazy loading)
     property var loadedTabs: ({0: true}) // Tab 0 (widgets) loaded by default

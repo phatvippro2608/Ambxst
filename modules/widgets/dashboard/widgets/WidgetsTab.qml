@@ -58,7 +58,7 @@ Rectangle {
 
                     Calendar {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: width
+                        Layout.preferredHeight: implicitHeight
                     }
 
                     StyledRect {

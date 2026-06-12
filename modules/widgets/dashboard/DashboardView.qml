@@ -4,7 +4,8 @@ import qs.modules.services
 
 Item {
     implicitWidth: 900
-    implicitHeight: 56 + 48 * 6
+    implicitHeight: 112 + 48 * 6
+
 
     readonly property int leftPanelWidth: 270
 

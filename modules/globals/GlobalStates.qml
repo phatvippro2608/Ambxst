@@ -216,7 +216,7 @@ Singleton {
     }
 
     readonly property var _simpleThemeProps: [
-        "roundness", "oledMode", "lightMode", "font", "fontSize", "monoFont", "monoFontSize",
+        "roundness", "oledMode", "lightMode", "enableLunarCalendar", "font", "fontSize", "monoFont", "monoFontSize",
         "tintIcons", "enableCorners", "animDuration",
         "shadowOpacity", "shadowColor", "shadowXOffset", "shadowYOffset", "shadowBlur"
     ]
