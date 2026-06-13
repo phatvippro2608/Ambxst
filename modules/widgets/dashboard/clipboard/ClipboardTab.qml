@@ -1070,36 +1070,35 @@ Item {
                     highlight: Item {
                         width: resultsList.width
                         height: {
-                            let baseHeight = 48;
-                            if (resultsList.currentIndex === root.expandedItemIndex && !root.deleteMode && !root.aliasMode) {
-                                var itemData = itemsModel.get(resultsList.currentIndex).itemData;
-                                var optionsCount = 4;
-                                if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
+                            const idx = resultsList.currentIndex;
+                            const expandedIdx = root.expandedItemIndex;
+                            if (expandedIdx >= 0 && idx === expandedIdx && !root.deleteMode && !root.aliasMode) {
+                                const expItem = root.allItems[expandedIdx];
+                                let optionsCount = 4;
+                                if (expItem && (expItem.isFile || expItem.isImage || ClipboardUtils.isUrl(expItem.preview))) {
                                     optionsCount++;
                                 }
-                                var listHeight = 36 * Math.min(3, optionsCount);
-                                return baseHeight + 4 + listHeight + 8;
+                                const listHeight = 36 * Math.min(3, optionsCount);
+                                return 48 + 4 + listHeight + 8;
                             }
-                            return baseHeight;
+                            return 48;
                         }
 
                         // Calculate Y position based on index, not item position
                         y: {
-                            var yPos = 0;
-                            for (var i = 0; i < resultsList.currentIndex && i < itemsModel.count; i++) {
-                                var itemHeight = 48;
-                                if (i === root.expandedItemIndex && !root.deleteMode && !root.aliasMode) {
-                                    var itemData = itemsModel.get(i).itemData;
-                                    var optionsCount = 4;
-                                    if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
-                                        optionsCount++;
-                                    }
-                                    var listHeight = 36 * Math.min(3, optionsCount);
-                                    itemHeight = 48 + 4 + listHeight + 8;
+                            const idx = resultsList.currentIndex;
+                            const expandedIdx = root.expandedItemIndex;
+                            if (expandedIdx >= 0 && !root.deleteMode && !root.aliasMode && idx > expandedIdx) {
+                                const expItem = root.allItems[expandedIdx];
+                                let optionsCount = 4;
+                                if (expItem && (expItem.isFile || expItem.isImage || ClipboardUtils.isUrl(expItem.preview))) {
+                                    optionsCount++;
                                 }
-                                yPos += itemHeight;
+                                const listHeight = 36 * Math.min(3, optionsCount);
+                                const diff = 4 + listHeight + 8;
+                                return idx * 48 + diff;
                             }
-                            return yPos;
+                            return idx * 48;
                         }
 
                         Behavior on y {

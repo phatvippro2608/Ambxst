@@ -9,52 +9,6 @@ Item {
     property var sourceItem: null  // The icon item to tint
     property bool fullTint: false  // If true, apply solid primary color instead of shader
 
-    // Subset of colors for optimization (consistent with TintedWallpaper.qml)
-    readonly property var optimizedPalette: [
-        "background", "overBackground", "shadow",
-        "surface", "surfaceBright", "surfaceDim",
-        "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceContainerLow", "surfaceContainerLowest",
-        "primary", "secondary", "tertiary",
-        "red", "lightRed",
-        "green", "lightGreen",
-        "blue", "lightBlue",
-        "yellow", "lightYellow",
-        "cyan", "lightCyan",
-        "magenta", "lightMagenta"
-    ]
-
-    // Palette generation for the shader
-    Item {
-        id: paletteSourceItem
-        visible: true 
-        width: root.optimizedPalette.length
-        height: 1
-        opacity: 0
-        
-        Row {
-            anchors.fill: parent
-            Repeater {
-                model: root.optimizedPalette
-                delegate: Rectangle {
-                    id: paletteRect
-                    required property string modelData
-                    width: 1
-                    height: 1
-                    color: Colors[modelData]
-                }
-            }
-        }
-    }
-
-    ShaderEffectSource {
-        id: paletteTextureSource
-        sourceItem: paletteSourceItem
-        hideSource: true
-        visible: false
-        smooth: false
-        recursive: false
-    }
-
     property bool active: Config.tintIcons
 
     Loader {
@@ -100,8 +54,8 @@ Item {
                 anchors.fill: parent
                 
                 property var source: internalSource
-                property var paletteTexture: paletteTextureSource
-                property real paletteSize: root.optimizedPalette.length
+                property var paletteTexture: Colors.paletteTexture
+                property real paletteSize: Colors.optimizedPalette.length
                 property real texWidth: root.width
                 property real texHeight: root.height
 
@@ -111,3 +65,4 @@ Item {
         }
     }
 }
+

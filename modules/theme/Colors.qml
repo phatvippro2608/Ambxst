@@ -279,4 +279,51 @@ FileView {
 
     // List of available color names for color pickers (excludes internal/source colors)
     readonly property var availableColorNames: ["background", "surface", "surfaceBright", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceContainerLow", "surfaceContainerLowest", "surfaceDim", "surfaceTint", "surfaceVariant", "primary", "primaryContainer", "primaryFixed", "primaryFixedDim", "secondary", "secondaryContainer", "secondaryFixed", "secondaryFixedDim", "tertiary", "tertiaryContainer", "tertiaryFixed", "tertiaryFixedDim", "error", "errorContainer", "overBackground", "overSurface", "overSurfaceVariant", "overPrimary", "overPrimaryContainer", "overPrimaryFixed", "overPrimaryFixedVariant", "overSecondary", "overSecondaryContainer", "overSecondaryFixed", "overSecondaryFixedVariant", "overTertiary", "overTertiaryContainer", "overTertiaryFixed", "overTertiaryFixedVariant", "overError", "overErrorContainer", "outline", "outlineVariant", "inversePrimary", "inverseSurface", "inverseOnSurface", "shadow", "scrim", "blue", "blueContainer", "overBlue", "overBlueContainer", "lightBlue", "cyan", "cyanContainer", "overCyan", "overCyanContainer", "lightCyan", "green", "greenContainer", "overGreen", "overGreenContainer", "lightGreen", "magenta", "magentaContainer", "overMagenta", "overMagentaContainer", "lightMagenta", "red", "redContainer", "overRed", "overRedContainer", "lightRed", "yellow", "yellowContainer", "overYellow", "overYellowContainer", "lightYellow", "white", "whiteContainer", "overWhite", "overWhiteContainer"]
+
+    // Shared palette texture for Tinted and TintedWallpaper optimization
+    readonly property var optimizedPalette: [
+        "background", "overBackground", "shadow",
+        "surface", "surfaceBright", "surfaceDim",
+        "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceContainerLow", "surfaceContainerLowest",
+        "primary", "secondary", "tertiary",
+        "red", "lightRed",
+        "green", "lightGreen",
+        "blue", "lightBlue",
+        "yellow", "lightYellow",
+        "cyan", "lightCyan",
+        "magenta", "lightMagenta"
+    ]
+
+    property var paletteTexture: paletteTextureSource
+
+    property Item paletteSourceItem: Item {
+        id: paletteSourceItem
+        visible: true
+        width: colors.optimizedPalette.length
+        height: 1
+        opacity: 0
+
+        Row {
+            anchors.fill: parent
+            Repeater {
+                model: colors.optimizedPalette
+                delegate: Rectangle {
+                    required property string modelData
+                    width: 1
+                    height: 1
+                    color: colors[modelData]
+                }
+            }
+        }
+    }
+
+    property ShaderEffectSource paletteTextureSource: ShaderEffectSource {
+        id: paletteTextureSource
+        sourceItem: paletteSourceItem
+        hideSource: true
+        visible: false
+        smooth: false
+        recursive: false
+    }
 }
+

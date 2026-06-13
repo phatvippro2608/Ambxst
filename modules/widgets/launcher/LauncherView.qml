@@ -1017,16 +1017,12 @@ Rectangle {
 
                     // Calculate Y position based on index, accounting for expanded items
                     y: {
-                        var yPos = 0;
-                        for (var i = 0; i < resultsList.currentIndex && i < appsModel.count; i++) {
-                            var itemHeight = 48;
-                            if (i === appLauncher.expandedItemIndex) {
-                                var listHeight = 36 * 3;
-                                itemHeight = 48 + 4 + listHeight + 8;
-                            }
-                            yPos += itemHeight;
+                        const idx = resultsList.currentIndex;
+                        const expandedIdx = appLauncher.expandedItemIndex;
+                        if (expandedIdx >= 0 && idx > expandedIdx) {
+                            return idx * 48 + 120;
                         }
-                        return yPos;
+                        return idx * 48;
                     }
 
                     Behavior on y {

@@ -9,51 +9,6 @@ Item {
     property real radius: 0
     property bool tintEnabled: false
     
-    // Subset of colors for optimization (approx 25 colors vs 98)
-    // Copied from Wallpaper.qml to ensure consistency
-    readonly property var optimizedPalette: [
-        "background", "overBackground", "shadow",
-        "surface", "surfaceBright", "surfaceDim",
-        "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceContainerLow", "surfaceContainerLowest",
-        "primary", "secondary", "tertiary",
-        "red", "lightRed",
-        "green", "lightGreen",
-        "blue", "lightBlue",
-        "yellow", "lightYellow",
-        "cyan", "lightCyan",
-        "magenta", "lightMagenta"
-    ]
-
-    // Palette generation for the shader
-    Item {
-        id: paletteSourceItem
-        visible: true 
-        width: root.optimizedPalette.length
-        height: 1
-        opacity: 0
-        
-        Row {
-            anchors.fill: parent
-            Repeater {
-                model: root.optimizedPalette
-                Rectangle {
-                    width: 1
-                    height: 1
-                    color: Colors[modelData]
-                }
-            }
-        }
-    }
-
-    ShaderEffectSource {
-        id: paletteTextureSource
-        sourceItem: paletteSourceItem
-        hideSource: true
-        visible: false
-        smooth: false
-        recursive: false
-    }
-
     // Container for masking (rounded corners)
     Item {
         anchors.fill: parent
@@ -83,8 +38,8 @@ Item {
             // Tint layer
             layer.enabled: root.tintEnabled
             layer.effect: ShaderEffect {
-                property var paletteTexture: paletteTextureSource
-                property real paletteSize: root.optimizedPalette.length
+                property var paletteTexture: Colors.paletteTexture
+                property real paletteSize: Colors.optimizedPalette.length
                 property real texWidth: rawImage.width
                 property real texHeight: rawImage.height
 
@@ -94,3 +49,4 @@ Item {
         }
     }
 }
+

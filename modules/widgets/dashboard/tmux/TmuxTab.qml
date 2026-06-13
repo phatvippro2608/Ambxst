@@ -1663,19 +1663,13 @@ Item {
                         return baseHeight;
                     }
 
-                    // Calculate Y position based on index, accounting for expanded items
                     y: {
-                        var yPos = 0;
-                        for (var i = 0; i < resultsList.currentIndex && i < sessionsModel.count; i++) {
-                            var itemData = sessionsModel.get(i).sessionData;
-                            var itemHeight = 48;
-                            if (i === root.expandedItemIndex && !root.deleteMode && !root.renameMode) {
-                                var listHeight = 36 * 3;
-                                itemHeight = 48 + 4 + listHeight + 8;
-                            }
-                            yPos += itemHeight;
+                        const idx = resultsList.currentIndex;
+                        const expandedIdx = root.expandedItemIndex;
+                        if (expandedIdx >= 0 && !root.deleteMode && !root.renameMode && idx > expandedIdx) {
+                            return idx * 48 + 120;
                         }
-                        return yPos;
+                        return idx * 48;
                     }
 
                     Behavior on y {

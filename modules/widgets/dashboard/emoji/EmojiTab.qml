@@ -858,28 +858,22 @@ Rectangle {
                 width: root.isAtRecent ? 40 : emojiList.width
                 x: root.isAtRecent ? root.recentX - root.recentContentX : 0
                 y: {
-                    var yPos = 0;
-                    for (var i = 0; i < emojiList.currentIndex && i < emojisModel.count; i++) {
-                        var h = 48;
-                        var item = emojisModel.get(i);
-                        if (i === root.expandedItemIndex && item && item.emojiData && item.emojiData.skin_tone_support) {
-                            h = 48 + 4 + (36 * Math.min(3, root.skinTones.length)) + 8;
-                        }
-                        yPos += h;
+                    const idx = emojiList.currentIndex;
+                    const expandedIdx = root.expandedItemIndex;
+                    let yPos = idx * 48;
+                    if (expandedIdx >= 0 && idx > expandedIdx) {
+                        yPos += 120;
                     }
-                    if (root.isAtRecent)
+                    if (root.isAtRecent) {
                         yPos += 4;
+                    }
                     return yPos;
                 }
                 height: {
-                    if (emojiList.currentIndex === -1)
-                        return 0;
-                    var item = emojisModel.get(emojiList.currentIndex);
-                    if (item && item.isRecentContainer)
-                        return 40;
-                    if (item && item.emojiData && item.emojiData.skin_tone_support && emojiList.currentIndex === root.expandedItemIndex) {
-                        return 48 + 4 + (36 * Math.min(3, root.skinTones.length)) + 8;
-                    }
+                    const idx = emojiList.currentIndex;
+                    if (idx === -1) return 0;
+                    if (idx === 0 && root.recentEmojis.length > 0 && root.searchText === "") return 40;
+                    if (idx === root.expandedItemIndex) return 168;
                     return 48;
                 }
 

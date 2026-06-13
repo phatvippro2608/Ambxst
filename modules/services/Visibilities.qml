@@ -19,10 +19,47 @@ Singleton {
     property string lastFocusedScreen: ""
     property var contextMenu: null
     property bool playerMenuOpen: false
+    property var openPopups: []
     readonly property var moduleNames: ["launcher", "dashboard", "overview", "powermenu", "tools", "presets"]
 
     function setContextMenu(menu) {
         contextMenu = menu;
+    }
+
+    function registerOpenPopup(popup) {
+        if (!popup) return;
+        
+        // Close all other open popups
+        for (let i = 0; i < openPopups.length; i++) {
+            let p = openPopups[i];
+            if (p && p !== popup && p.isOpen) {
+                p.close();
+            }
+        }
+        
+        // Clean up and add this popup
+        let newList = openPopups.filter(p => p && p !== popup && p.isOpen);
+        newList.push(popup);
+        openPopups = newList;
+
+        // If a main module is active, close it!
+        if (currentActiveModule !== "") {
+            setActiveModule("");
+        }
+    }
+
+    function unregisterOpenPopup(popup) {
+        openPopups = openPopups.filter(p => p && p !== popup);
+    }
+
+    function closeAllPopups() {
+        for (let i = 0; i < openPopups.length; i++) {
+            let p = openPopups[i];
+            if (p && p.isOpen) {
+                p.close();
+            }
+        }
+        openPopups = [];
     }
 
     function getForScreen(screenName) {
@@ -147,6 +184,7 @@ Singleton {
         if (moduleName) {
             currentActiveModule = moduleName;
             applyActiveModuleToScreen(focusedScreenName);
+            closeAllPopups();
         } else {
             currentActiveModule = "";
         }

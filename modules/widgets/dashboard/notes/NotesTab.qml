@@ -1292,18 +1292,14 @@ Item {
                     }
 
                     y: {
-                        var yPos = 0;
-                        for (var i = 0; i < resultsList.currentIndex && i < notesModel.count; i++) {
-                            var itemHeight = 48;
-                            if (i === root.expandedItemIndex && !root.deleteMode && !root.renameMode) {
-                                var isCreateBtn = i < filteredNotes.length && filteredNotes[i].isCreateButton;
-                                var optionCount = isCreateBtn ? 2 : 3;
-                                var listHeight = 36 * optionCount;
-                                itemHeight = 48 + 4 + listHeight + 8;
-                            }
-                            yPos += itemHeight;
+                        const idx = resultsList.currentIndex;
+                        const expandedIdx = root.expandedItemIndex;
+                        if (expandedIdx >= 0 && !root.deleteMode && !root.renameMode && idx > expandedIdx) {
+                            const isCreateBtn = expandedIdx < root.filteredNotes.length && root.filteredNotes[expandedIdx].isCreateButton;
+                            const diff = isCreateBtn ? 84 : 120;
+                            return idx * 48 + diff;
                         }
-                        return yPos;
+                        return idx * 48;
                     }
 
                     Behavior on y {

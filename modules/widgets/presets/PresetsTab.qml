@@ -1354,18 +1354,15 @@ Item {
                 }
 
                 y: {
-                    var yPos = 0;
-                    for (var i = 0; i < resultsList.currentIndex && i < presetsModel.count; i++) {
-                        var itemHeight = 48;
-                        if (i === root.expandedItemIndex && !root.deleteMode && !root.renameMode && !root.updateMode) {
-                            let pItem = presetsModel.get(i);
-                            let optCount = pItem && pItem.presetData ? root.getPresetOptions(pItem.presetData).length : 3;
-                            var listHeight = 36 * optCount;
-                            itemHeight = 48 + 4 + listHeight + 8;
-                        }
-                        yPos += itemHeight;
+                    const idx = resultsList.currentIndex;
+                    const expandedIdx = root.expandedItemIndex;
+                    if (expandedIdx >= 0 && !root.deleteMode && !root.renameMode && !root.updateMode && idx > expandedIdx) {
+                        const pItem = presetsModel.get(expandedIdx);
+                        const optCount = pItem && pItem.presetData ? root.getPresetOptions(pItem.presetData).length : 3;
+                        const diff = 12 + 36 * optCount;
+                        return idx * 48 + diff;
                     }
-                    return yPos;
+                    return idx * 48;
                 }
 
                 Behavior on y {

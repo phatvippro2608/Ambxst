@@ -182,6 +182,9 @@ PopupWindow {
         // Show popup
         visible = true;
 
+        // Register with Visibilities
+        Visibilities.registerOpenPopup(root);
+
         // Start animation after a frame
         Qt.callLater(() => {
             popupOpacity = 1;
@@ -197,6 +200,9 @@ PopupWindow {
         // Set logical state immediately
         isOpen = false;
         focusActive = false;
+
+        // Unregister with Visibilities
+        Visibilities.unregisterOpenPopup(root);
 
         // Animate out
         popupOpacity = 0;
@@ -220,5 +226,19 @@ PopupWindow {
         onTriggered: {
             root.visible = false;
         }
+    }
+
+    Connections {
+        target: Visibilities
+        ignoreUnknownSignals: true
+        function onCurrentActiveModuleChanged() {
+            if (Visibilities.currentActiveModule !== "" && root.isOpen) {
+                root.close();
+            }
+        }
+    }
+
+    Component.onDestruction: {
+        Visibilities.unregisterOpenPopup(root);
     }
 }

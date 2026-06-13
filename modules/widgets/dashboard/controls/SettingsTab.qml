@@ -62,61 +62,9 @@ Rectangle {
         id: searchIndex
     }
 
-    // Dynamic Settings Indexer
-    Item {
-        id: settingsIndexer
-        visible: false // Headless
-
-        property int currentPanelIndex: 0
-        property var aggregatedItems: []
-        property bool isIndexing: false
-
-        // Helper to load panels one by one
-        Loader {
-            id: indexerLoader
-            active: settingsIndexer.isIndexing
-            asynchronous: true
-            source: settingsIndexer.isIndexing && settingsIndexer.currentPanelIndex < contentArea.panelComponents.length ? contentArea.panelComponents[settingsIndexer.currentPanelIndex].component : ""
-
-            onStatusChanged: {
-                if (status === Loader.Ready && item) {
-                    // Scrape
-                    const sectionId = contentArea.panelComponents[settingsIndexer.currentPanelIndex].section;
-                    const newItems = SettingsCrawler.crawl(item, sectionId);
-                    settingsIndexer.aggregatedItems = settingsIndexer.aggregatedItems.concat(newItems);
-
-                    // Move to next
-                    settingsIndexer.currentPanelIndex++;
-                } else if (status === Loader.Error) {
-                    console.warn("Failed to load panel for indexing:", source);
-                    settingsIndexer.currentPanelIndex++;
-                }
-            }
-        }
-
-        onCurrentPanelIndexChanged: {
-            if (currentPanelIndex >= contentArea.panelComponents.length) {
-                // Done
-                if (isIndexing) {
-                    isIndexing = false;
-                    searchIndex.addDynamicItems(aggregatedItems);
-                }
-            }
-        }
-
-        Component.onCompleted: {
-            // Start indexing after a short delay to allow UI to settle
-            indexingTimer.start();
-        }
-
-        Timer {
-            id: indexingTimer
-            interval: 500
-            onTriggered: {
-                settingsIndexer.isIndexing = true;
-            }
-        }
-    }
+    // Dynamic Settings Indexer is disabled/removed to optimize performance.
+    // Heavy panels loaded in the background would cause GUI main-thread stutters.
+    // Search is handled fully by staticItems defined in SettingsIndex.qml.
 
     // Store pending subsection to apply when panel loads
     property string pendingSubSection: ""
@@ -127,8 +75,9 @@ Rectangle {
 
         // Panels that support subsections: Theme(5), System(7), Compositor(8), Shell(9)
         if ([5, 7, 8, 9].includes(sectionId)) {
-            if (panelLoader.item && panelLoader.status === Loader.Ready) {
-                panelLoader.item.currentSection = subSectionId;
+            const loader = panelRepeater.itemAt(sectionId);
+            if (loader && loader.item && loader.status === Loader.Ready) {
+                loader.item.currentSection = subSectionId;
             } else {
                 pendingSubSection = subSectionId;
             }
@@ -152,14 +101,12 @@ Rectangle {
         }
     }
 
-    // Fuzzy match: checks if all characters of query appear in order in target
-    function fuzzyMatch(query, target) {
-        if (query.length === 0)
+    // Fuzzy match: checks if all characters of lowerQuery appear in order in lowerTarget
+    function fuzzyMatch(lowerQuery, lowerTarget) {
+        if (lowerQuery.length === 0)
             return true;
-        if (target.length === 0)
+        if (lowerTarget.length === 0)
             return false;
-        const lowerQuery = query.toLowerCase();
-        const lowerTarget = target.toLowerCase();
         let queryIndex = 0;
         for (let i = 0; i < lowerTarget.length && queryIndex < lowerQuery.length; i++) {
             if (lowerTarget[i] === lowerQuery[queryIndex]) {
@@ -170,17 +117,15 @@ Rectangle {
     }
 
     // Score a fuzzy match (higher is better)
-    function fuzzyScore(query, target) {
-        if (query.length === 0)
+    function fuzzyScore(lowerQuery, lowerTarget) {
+        if (lowerQuery.length === 0)
             return 0;
-        if (target.length === 0)
+        if (lowerTarget.length === 0)
             return -1;
-        const lowerQuery = query.toLowerCase();
-        const lowerTarget = target.toLowerCase();
 
         // Exact match gets highest score
         if (lowerTarget.includes(lowerQuery))
-            return 1000 + (100 - target.length);
+            return 1000 + (100 - lowerTarget.length);
 
         // Fuzzy scoring
         let queryIndex = 0, score = 0, consecutive = 0, maxConsecutive = 0;
@@ -274,22 +219,32 @@ Rectangle {
             return sectionModel;
 
         const query = searchQuery.toLowerCase();
-        return searchIndex.items.filter(item => {
-            return fuzzyMatch(query, item.label) || (item.keywords && item.keywords.includes(query));
-        }).map(item => {
-            // Find section metadata
-            const sectionMeta = sectionModel.find(s => s.section === item.section) || {};
-            return {
-                label: item.label,
-                section: item.section,
-                subSection: item.subSection || "",
-                subLabel: item.subLabel || "",
-                // Use section icon instead of item icon
-                icon: sectionMeta.icon || item.icon,
-                isIcon: sectionMeta.isIcon !== undefined ? sectionMeta.isIcon : (item.isIcon !== undefined ? item.isIcon : true),
-                score: fuzzyScore(query, item.label)
-            };
-        }).sort((a, b) => b.score - a.score);
+        const results = [];
+        const items = searchIndex.items;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const lowerLabel = item.label.toLowerCase();
+            const lowerKeywords = item.keywords ? item.keywords.toLowerCase() : "";
+
+            if (fuzzyMatch(query, lowerLabel) || lowerKeywords.includes(query)) {
+                // Find section metadata
+                const sectionMeta = sectionModel.find(s => s.section === item.section) || {};
+
+                results.push({
+                    label: item.label,
+                    section: item.section,
+                    subSection: item.subSection || "",
+                    subLabel: item.subLabel || "",
+                    // Use section icon instead of item icon
+                    icon: sectionMeta.icon || item.icon,
+                    isIcon: sectionMeta.isIcon !== undefined ? sectionMeta.isIcon : (item.isIcon !== undefined ? item.isIcon : true),
+                    score: fuzzyScore(query, lowerLabel)
+                });
+            }
+        }
+
+        return results.sort((a, b) => b.score - a.score);
     }
 
     // Find the index of current section in filtered list
@@ -608,30 +563,38 @@ Rectangle {
                 }
             ]
 
-            // Lazy-loaded panel using Loader
-            Loader {
-                id: panelLoader
-                anchors.fill: parent
-                asynchronous: true
-                source: contentArea.panelComponents[root.currentSection]?.component ?? ""
+            // Cached lazy-loaded panels using Repeater of Loaders
+            Repeater {
+                id: panelRepeater
+                model: contentArea.panelComponents
+                delegate: Loader {
+                    required property var modelData
+                    required property int index
 
-                // Fade in animation
-                opacity: status === Loader.Ready ? 1 : 0
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutCubic
+                    anchors.fill: parent
+                    asynchronous: true
+                    active: index === root.currentSection || status === Loader.Ready
+                    visible: index === root.currentSection
+                    source: modelData.component
+
+                    // Fade in animation
+                    opacity: visible && status === Loader.Ready ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
+                        }
                     }
-                }
 
-                onLoaded: {
-                    if (item) {
-                        item.maxContentWidth = contentArea.maxContentWidth;
-                        // Apply pending subsection if any
-                        if (root.pendingSubSection !== "" && item.currentSection !== undefined) {
-                            item.currentSection = root.pendingSubSection;
-                            root.pendingSubSection = "";
+                    onLoaded: {
+                        if (item) {
+                            item.maxContentWidth = contentArea.maxContentWidth;
+                            // Apply pending subsection if any
+                            if (root.pendingSubSection !== "" && index === root.currentSection && item.currentSection !== undefined) {
+                                item.currentSection = root.pendingSubSection;
+                                root.pendingSubSection = "";
+                            }
                         }
                     }
                 }
