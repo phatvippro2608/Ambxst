@@ -130,7 +130,7 @@ Item {
         anchors.fill: parent
         radius: Styling.radius(-4)
 
-        Text {
+        MarqueeText {
             id: mediaTitle
             anchors.centerIn: parent
             width: parent.width - 32
@@ -139,7 +139,6 @@ Item {
             font.pixelSize: Styling.fontSize(0)
             font.bold: true
             color: Colors.overBackground
-            elide: Text.ElideRight
             visible: opacity > 0
             opacity: (compactPlayer.notchHovered && compactPlayer.player) ? 0.0 : 1.0
             horizontalAlignment: Text.AlignHCenter

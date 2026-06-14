@@ -156,7 +156,11 @@ MouseArea {
         source: {
             const iconPath = root.item.icon.toString();
             if (iconPath.includes("spotify")) {
-                return Quickshell.iconPath("spotify-client");
+                const guessed = AppSearch.getCachedIcon("spotify");
+                if (guessed && guessed !== "image-missing") {
+                    return Quickshell.iconPath(guessed);
+                }
+                return Quickshell.iconPath("spotify-launcher");
             }
             return root.item.icon;
         }

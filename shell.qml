@@ -301,6 +301,7 @@ ShellRoot {
             let _ = NightLightService.active;
             _ = GameModeService.toggled;
             _ = BingWallpaperService.toString();
+            _ = LocationService.active;
         }
     }
 }

@@ -1055,6 +1055,11 @@ Singleton {
                 property bool autoStart: false
                 property bool syncSpotify: false
             }
+            property JsonObject location: JsonObject {
+                property bool allowWeatherApp: true
+                property bool allowAiApp: true
+                property bool allowTimezoneApp: true
+            }
         }
     }
 

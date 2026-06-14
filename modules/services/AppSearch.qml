@@ -75,11 +75,36 @@ Singleton {
         return null;
     }
 
+    function findAlternativeIcon(name) {
+        if (!name) return "";
+        let base = name.toLowerCase();
+        const suffixes = ["-launcher", "-client", "-desktop", "-bin", "-browser", "_client", "_launcher"];
+        
+        // Remove any existing suffix to get the base name
+        for (let i = 0; i < suffixes.length; i++) {
+            if (base.endsWith(suffixes[i])) {
+                base = base.substring(0, base.length - suffixes[i].length);
+                break;
+            }
+        }
+
+        // Check if base exists
+        if (iconExists(base)) return base;
+
+        // Try adding other suffixes to base
+        for (let i = 0; i < suffixes.length; i++) {
+            const candidate = base + suffixes[i];
+            if (iconExists(candidate)) return candidate;
+        }
+
+        return "";
+    }
+
     function guessIcon(str) {
         if (!str || str.length == 0) return "image-missing";
 
         const desktopIcon = getIconFromDesktopEntry(str);
-        if (desktopIcon) return desktopIcon;
+        if (desktopIcon && iconExists(desktopIcon)) return desktopIcon;
 
         if (substitutions[str])
             return substitutions[str];
@@ -90,7 +115,9 @@ Singleton {
                 substitution.regex,
                 substitution.replace,
             );
-            if (replacedName != str) return replacedName;
+            if (replacedName != str) {
+                if (iconExists(replacedName)) return replacedName;
+            }
         }
 
         if (iconExists(str)) return str;
@@ -100,6 +127,15 @@ Singleton {
 
         const dashedGuess = str.toLowerCase().replace(/\s+/g, "-");
         if (iconExists(dashedGuess)) return dashedGuess;
+
+        // Try our smart alternative icon guesser!
+        const alternative = findAlternativeIcon(str);
+        if (alternative) return alternative;
+
+        if (desktopIcon) {
+            const altDesktop = findAlternativeIcon(desktopIcon);
+            if (altDesktop) return altDesktop;
+        }
 
         return str;
     }
@@ -113,6 +149,7 @@ Singleton {
         "wpsoffice": "wps-office2019-kprometheus",
         "footclient": "foot",
         "zen": "zen-browser",
+        "antigravity-ide": "utilities-terminal",
     })
     property list<var> regexSubstitutions: [
         {

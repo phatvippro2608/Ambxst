@@ -6,6 +6,7 @@ import Quickshell.Services.Mpris
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
+import qs.modules.globals
 import qs.config
 
 StyledRect {
@@ -249,29 +250,21 @@ StyledRect {
                 Layout.fillWidth: true
                 spacing: 0
 
-                Text {
+                MarqueeText {
                     Layout.fillWidth: true
                     text: MprisController.activePlayer?.trackTitle ?? "No hay reproducción activa"
-                    textFormat: Text.PlainText
                     color: Colors.overBackground
                     font.pixelSize: Config.theme.fontSize
                     font.weight: Font.Bold
                     font.family: Config.theme.font
-                    elide: Text.ElideRight
-                    wrapMode: Text.NoWrap
-                    maximumLineCount: 1
                 }
 
-                Text {
+                MarqueeText {
                     Layout.fillWidth: true
                     text: MprisController.activePlayer?.trackArtist ?? ""
-                    textFormat: Text.PlainText
                     color: Colors.overBackground
                     font.pixelSize: Config.theme.fontSize
                     font.family: Config.theme.font
-                    elide: Text.ElideRight
-                    wrapMode: Text.NoWrap
-                    maximumLineCount: 1
                     visible: text !== ""
                     opacity: 0.7
                 }

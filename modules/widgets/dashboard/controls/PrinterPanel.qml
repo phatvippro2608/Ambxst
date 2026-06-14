@@ -20,6 +20,49 @@ Item {
     property string newAddress: ""
     property string newProtocol: "socket://"
     property string newDriver: "everywhere"
+    property int currentTab: 0
+
+    Component.onCompleted: {
+        console.log("DEBUG: PrinterPanel currentTab onCompleted:", root.currentTab);
+    }
+
+    Timer {
+        interval: 1500
+        running: true
+        repeat: false
+        onTriggered: {
+            console.log("DEBUG: Timer triggered. currentTab was:", root.currentTab);
+            root.currentTab = 0;
+            console.log("DEBUG: Timer triggered. currentTab is now:", root.currentTab);
+        }
+    }
+
+    readonly property var panelActions: {
+        let list = [];
+        if (root.currentTab === 0) {
+            list.push({
+                icon: Icons.plus,
+                tooltip: "Add Printer",
+                loading: false,
+                onClicked: function () {
+                    root.showAddForm = !root.showAddForm;
+                    if (root.showAddForm) {
+                        PrinterService.discoverPrinters();
+                    }
+                }
+            });
+        }
+        list.push({
+            icon: Icons.sync,
+            tooltip: "Refresh",
+            loading: false,
+            onClicked: function () {
+                PrinterService.monitorProcess.running = false;
+                Qt.callLater(() => { PrinterService.monitorProcess.running = true; });
+            }
+        });
+        return list;
+    }
 
     Flickable {
         id: flickable
@@ -39,38 +82,31 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 16
 
-            // Section 1: Printers Titlebar & List
+            // Section 1: Printers Titlebar
             PanelTitlebar {
                 title: "Printers"
                 statusText: !PrinterService.cupsActive ? "CUPS Offline" : ""
                 statusColor: Colors.red
-                
-                actions: [
-                    {
-                        icon: Icons.plus,
-                        tooltip: "Add Printer",
-                        loading: false,
-                        onClicked: function () {
-                            root.showAddForm = !root.showAddForm;
-                            if (root.showAddForm) {
-                                PrinterService.discoverPrinters();
-                            }
-                        }
-                    },
-                    {
-                        icon: Icons.sync,
-                        tooltip: "Refresh",
-                        loading: false,
-                        onClicked: function () {
-                            PrinterService.monitorProcess.running = false;
-                            Qt.callLater(() => { PrinterService.monitorProcess.running = true; });
-                        }
-                    }
-                ]
+                actions: root.panelActions
             }
 
-            // Printers List
+            // Tab switch
+            SegmentedSwitch {
+                id: tabSwitch
+                Layout.fillWidth: true
+                options: [
+                    { label: "Printers", icon: Icons.printer },
+                    { label: "Jobs & History", icon: Icons.list }
+                ]
+                currentIndex: root.currentTab
+                onIndexChanged: index => {
+                    root.currentTab = index;
+                }
+            }
+
+            // Tab 0: Printers & Options
             ColumnLayout {
+                visible: root.currentTab === 0
                 Layout.fillWidth: true
                 spacing: 8
 
@@ -479,151 +515,264 @@ Item {
                 }
             }
 
-            // Section 2: Active Print Jobs
-            Item {
-                Layout.fillWidth: true
-                height: 12
-            }
-
-            Text {
-                text: "Active Print Jobs"
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
-                font.weight: Font.Medium
-                color: Colors.overBackground
-            }
-
-            // Jobs List
+            // Tab 1: Jobs & History
             ColumnLayout {
+                visible: root.currentTab === 1
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 16
 
-                Repeater {
-                    model: PrinterService.jobs
+                // Section 1: Active Print Jobs
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
 
-                    delegate: StyledRect {
-                        id: jobCard
-                        required property var modelData
-                        required property int index
+                    Text {
+                        text: "Active Print Jobs"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(0)
+                        font.weight: Font.Medium
+                        color: Colors.overBackground
+                    }
 
-                        Layout.fillWidth: true
-                        height: 64
-                        variant: "common"
-                        enableShadow: false
-                        radius: Styling.radius(0)
+                    Repeater {
+                        model: PrinterService.jobs
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            spacing: 12
+                        delegate: StyledRect {
+                            id: jobCard
+                            required property var modelData
+                            required property int index
 
-                            Text {
-                                text: Icons.file
-                                font.family: Icons.font
-                                font.pixelSize: 20
-                                color: Colors.overBackground
-                                Layout.alignment: Qt.AlignVCenter
-                            }
+                            Layout.fillWidth: true
+                            height: 64
+                            variant: "common"
+                            enableShadow: false
+                            radius: Styling.radius(0)
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Layout.alignment: Qt.AlignVCenter
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 12
 
                                 Text {
-                                    text: jobCard.modelData.file || jobCard.modelData.id
-                                    font.family: Config.theme.font
-                                    font.pixelSize: Styling.fontSize(-1)
-                                    font.bold: true
+                                    text: Icons.file
+                                    font.family: Icons.font
+                                    font.pixelSize: 20
                                     color: Colors.overBackground
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
                                 }
 
-                                RowLayout {
-                                    spacing: 8
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Layout.alignment: Qt.AlignVCenter
+
                                     Text {
-                                        text: jobCard.modelData.printer + " • " + jobCard.modelData.size
+                                        text: jobCard.modelData.file || jobCard.modelData.id
                                         font.family: Config.theme.font
-                                        font.pixelSize: Styling.fontSize(-2)
-                                        color: Colors.overSurfaceVariant
+                                        font.pixelSize: Styling.fontSize(-1)
+                                        font.bold: true
+                                        color: Colors.overBackground
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
                                     }
 
-                                    // Processing indicator
-                                    StyledRect {
-                                        visible: jobCard.modelData.status === "processing"
-                                        variant: "primary"
-                                        height: 16
-                                        width: 76
-                                        radius: Styling.radius(-6)
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: jobCard.modelData.printer + " • " + jobCard.modelData.size
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Styling.fontSize(-2)
+                                            color: Colors.overSurfaceVariant
+                                        }
 
-                                        RowLayout {
-                                            anchors.centerIn: parent
-                                            spacing: 4
-                                            Text {
-                                                text: Icons.circleNotch
-                                                font.family: Icons.font
-                                                font.pixelSize: 8
-                                                color: Styling.srItem("overprimary")
-                                                RotationAnimation on rotation {
-                                                    running: jobCard.modelData.status === "processing"
-                                                    from: 0
-                                                    to: 360
-                                                    duration: 1000
-                                                    loops: Animation.Infinite
+                                        // Processing indicator
+                                        StyledRect {
+                                            visible: jobCard.modelData.status === "processing"
+                                            variant: "primary"
+                                            height: 16
+                                            width: 76
+                                            radius: Styling.radius(-6)
+
+                                            RowLayout {
+                                                anchors.centerIn: parent
+                                                spacing: 4
+                                                Text {
+                                                    text: Icons.circleNotch
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 8
+                                                    color: Styling.srItem("overprimary")
+                                                    RotationAnimation on rotation {
+                                                        running: jobCard.modelData.status === "processing"
+                                                        from: 0
+                                                        to: 360
+                                                        duration: 1000
+                                                        loops: Animation.Infinite
+                                                    }
                                                 }
-                                            }
-                                            Text {
-                                                text: "PRINTING"
-                                                font.family: Config.theme.font
-                                                font.pixelSize: Styling.fontSize(-3)
-                                                font.bold: true
-                                                color: Styling.srItem("overprimary")
+                                                Text {
+                                                    text: "PRINTING"
+                                                    font.family: Config.theme.font
+                                                    font.pixelSize: Styling.fontSize(-3)
+                                                    font.bold: true
+                                                    color: Styling.srItem("overprimary")
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            // Cancel Job Button
-                            Button {
-                                flat: true
-                                implicitWidth: 32
-                                implicitHeight: 32
-                                
-                                background: StyledRect {
-                                    variant: parent.hovered ? "focus" : "internalbg"
-                                    radius: Styling.radius(-4)
-                                }
-                                
-                                contentItem: Text {
-                                    text: Icons.trash
-                                    font.family: Icons.font
-                                    font.pixelSize: 14
-                                    color: Colors.red
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                onClicked: PrinterService.cancelJob(jobCard.modelData.id)
-                                
-                                StyledToolTip {
-                                    visible: parent.hovered
-                                    tooltipText: "Cancel print job"
+                                // Cancel Job Button
+                                Button {
+                                    flat: true
+                                    implicitWidth: 32
+                                    implicitHeight: 32
+                                    
+                                    background: StyledRect {
+                                        variant: parent.hovered ? "focus" : "internalbg"
+                                        radius: Styling.radius(-4)
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: Icons.trash
+                                        font.family: Icons.font
+                                        font.pixelSize: 14
+                                        color: Colors.red
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: PrinterService.cancelJob(jobCard.modelData.id)
+                                    
+                                    StyledToolTip {
+                                        visible: parent.hovered
+                                        tooltipText: "Cancel print job"
+                                    }
                                 }
                             }
                         }
                     }
+
+                    Text {
+                        visible: PrinterService.jobs.length === 0
+                        text: "No active print jobs"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: Colors.overSurfaceVariant
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 8
+                        Layout.bottomMargin: 8
+                    }
                 }
 
-                Text {
-                    visible: PrinterService.jobs.length === 0
-                    text: "No active print jobs"
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurfaceVariant
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.topMargin: 8
+                // Section 2: Job History
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Text {
+                        text: "Job History"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(0)
+                        font.weight: Font.Medium
+                        color: Colors.overBackground
+                    }
+
+                    Repeater {
+                        model: PrinterService.completedJobs
+
+                        delegate: StyledRect {
+                            id: completedJobCard
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            height: 64
+                            variant: "common"
+                            enableShadow: false
+                            radius: Styling.radius(0)
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 12
+
+                                Text {
+                                    text: Icons.file
+                                    font.family: Icons.font
+                                    font.pixelSize: 20
+                                    color: Colors.overSurfaceVariant
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        readonly property string displayName: {
+                                            const file = completedJobCard.modelData.file;
+                                            return (file && file !== "(unknown)") ? file : "Job #" + completedJobCard.modelData.id.split("-").pop();
+                                        }
+                                        text: displayName
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-1)
+                                        font.bold: true
+                                        color: Colors.overBackground
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: completedJobCard.modelData.printer + " • " + completedJobCard.modelData.size + " • " + completedJobCard.modelData.date
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Styling.fontSize(-2)
+                                            color: Colors.overSurfaceVariant
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
+
+                                // Status Badge
+                                StyledRect {
+                                    id: historyStatusBadge
+                                    variant: "internalbg"
+                                    height: 20
+                                    width: 68
+                                    radius: Styling.radius(-6)
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: Colors.green
+                                        opacity: 0.15
+                                        radius: parent.radius
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "DONE"
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-3)
+                                        font.bold: true
+                                        color: Colors.green
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        visible: PrinterService.completedJobs.length === 0
+                        text: "No print history available"
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: Colors.overSurfaceVariant
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 8
+                    }
                 }
             }
         }
@@ -667,7 +816,6 @@ Item {
 
         contentItem: ColumnLayout {
             spacing: 20
-            anchors.fill: parent
 
             // Header Row
             RowLayout {

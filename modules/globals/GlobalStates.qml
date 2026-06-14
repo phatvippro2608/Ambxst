@@ -582,5 +582,5 @@ Singleton {
         assistantVisible = false;
     }
 
-    property int settingsCurrentTab: 0
+    property int settingsCurrentTab: 10
 }

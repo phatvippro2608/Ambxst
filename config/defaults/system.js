@@ -47,5 +47,10 @@ var data = {
         "restTime": 300,
         "autoStart": false,
         "syncSpotify": false
+    },
+    "location": {
+        "allowWeatherApp": true,
+        "allowAiApp": true,
+        "allowTimezoneApp": true
     }
 }

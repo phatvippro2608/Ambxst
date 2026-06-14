@@ -518,6 +518,16 @@ Singleton {
             return;
         }
 
+        if (!LocationService.active || !Config.system.location.allowWeatherApp) {
+            console.log("WeatherService: Location access denied (Location Services disabled or Weather App not allowed)");
+            root.isLoading = false;
+            root.hasFailed = true;
+            root.dataAvailable = false;
+            return;
+        }
+
+        LocationService.reportAccess("Weather Widget");
+
         root.isLoading = true;
         root.hasFailed = false;
 
@@ -535,6 +545,20 @@ Singleton {
         interval: 2000
         running: true
         onTriggered: updateWeather()
+    }
+
+    Connections {
+        target: LocationService
+        function onActiveChanged() {
+            updateWeather();
+        }
+    }
+
+    Connections {
+        target: Config.system.location
+        function onAllowWeatherAppChanged() {
+            updateWeather();
+        }
     }
 
     Component.onCompleted: {

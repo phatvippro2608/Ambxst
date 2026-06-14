@@ -1,90 +1,51 @@
 import QtQuick
 import Quickshell.Services.Mpris
-import qs.modules.theme
-import qs.modules.services
-import qs.modules.notch
-import qs.modules.components
 import qs.config
+import qs.modules.components
+import qs.modules.notch
+import qs.modules.services
+import qs.modules.theme
 
 Item {
     id: root
-    anchors.top: parent.top
-    focus: false
 
     // Layout constants
     readonly property int notificationPadding: 16
     readonly property int notificationPaddingBottom: Config.notchTheme === "island" ? 20 : 16
     readonly property int notificationPaddingTop: 8
-
     // State
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
     readonly property var activePlayer: MprisController.activePlayer
     property bool notchHovered: false
     property bool parentHoverActive: false
     property bool isNavigating: false
-
     // Position detection
     readonly property string notchPosition: Config.notchPosition ?? "top"
     readonly property bool isBottom: notchPosition === "bottom"
-
-    HoverHandler {
-        id: contentHoverHandler
-    }
-
     readonly property bool expandedState: contentHoverHandler.hovered || notchHovered || parentHoverActive || isNavigating || Visibilities.playerMenuOpen
-
     property bool mediaHoverExpanded: false
-
-    Timer {
-        id: mediaHoverTimer
-        interval: 1000
-        running: expandedState && activePlayer !== null && !hasActiveNotifications && !mediaHoverExpanded && !(Config.notch.disableHoverExpansion ?? true)
-        onTriggered: mediaHoverExpanded = true
-    }
-
-    onExpandedStateChanged: {
-        if (!expandedState) {
-            mediaHoverExpanded = false;
-        }
-    }
-
-    onActivePlayerChanged: {
-        if (!activePlayer) {
-            mediaHoverExpanded = false;
-        }
-    }
-
     property real mainRowMargin: 16
-
-    Behavior on mainRowMargin {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
-        }
-    }
-
     // Computed dimensions
     readonly property real mainRowContentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + mainRowMargin
     readonly property real mainRowHeight: Config.showBackground ? (Config.notchTheme === "island" ? 36 : 44) : (Config.notchTheme === "island" ? 36 : 40)
     readonly property real notificationMinWidth: expandedState ? 420 : 320
     readonly property real notificationContainerHeight: notificationView.implicitHeight + notificationPaddingTop + notificationPaddingBottom
 
-    implicitWidth: Math.round((hasActiveNotifications || mediaHoverExpanded) ? Math.max(notificationMinWidth + (notificationPadding * 2), mainRowContentWidth) : mainRowContentWidth)
+    anchors.top: parent.top
+    focus: false
+    onExpandedStateChanged: {
+        if (!expandedState)
+            mediaHoverExpanded = false;
 
-    implicitHeight: hasActiveNotifications ? mainRowHeight + notificationContainerHeight : mainRowHeight
-
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
-        }
     }
+    onActivePlayerChanged: {
+        if (!activePlayer)
+            mediaHoverExpanded = false;
 
-    Keys.onPressed: event => {
+    }
+    implicitWidth: Math.round((hasActiveNotifications || mediaHoverExpanded) ? Math.max(notificationMinWidth + (notificationPadding * 2), mainRowContentWidth) : mainRowContentWidth)
+    implicitHeight: hasActiveNotifications ? mainRowHeight + notificationContainerHeight : mainRowHeight
+    Keys.onPressed: (event) => {
         if (expandedState && activePlayer) {
             if (event.key === Qt.Key_Space) {
                 activePlayer.togglePlaying();
@@ -105,12 +66,25 @@ Item {
         }
     }
 
+    HoverHandler {
+        id: contentHoverHandler
+    }
+
+    Timer {
+        id: mediaHoverTimer
+
+        interval: 1000
+        running: expandedState && activePlayer !== null && !hasActiveNotifications && !mediaHoverExpanded && !(Config.notch.disableHoverExpansion ?? true)
+        onTriggered: mediaHoverExpanded = true
+    }
+
     Item {
         anchors.fill: parent
 
         // mainRow container
         Row {
             id: mainRow
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: isBottom ? undefined : parent.top
             anchors.bottom: isBottom ? parent.bottom : undefined
@@ -121,11 +95,13 @@ Item {
 
             UserInfo {
                 id: userInfo
+
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Separator {
                 id: separator1
+
                 vert: true
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -140,29 +116,33 @@ Item {
 
             Separator {
                 id: separator2
+
                 vert: true
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             NotificationIndicator {
                 id: notifIndicator
+
                 anchors.verticalCenter: parent.verticalCenter
             }
+
         }
 
         // Notification container with its own padding
         Item {
             id: notificationContainer
+
             width: parent.width
             height: hasActiveNotifications ? notificationContainerHeight : 0
-            visible: hasActiveNotifications
-            
+            visible: height > 0
             // Position relative to mainRow
             anchors.top: isBottom ? undefined : mainRow.bottom
             anchors.bottom: isBottom ? mainRow.top : undefined
-            
+
             NotchNotificationView {
                 id: notificationView
+
                 anchors.fill: parent
                 // Invert padding based on position? Or keep as is?
                 // If bottom, "top" margin is visually the one close to mainRow?
@@ -176,14 +156,78 @@ Item {
                 notchHovered: expandedState
                 onIsNavigatingChanged: root.isNavigating = isNavigating
 
+                transform: Translate {
+                    y: hasActiveNotifications ? 0 : (isBottom ? 20 : -20)
+
+                    Behavior on y {
+                        enabled: Config.animDuration > 0
+
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.2
+                        }
+
+                    }
+
+                }
+
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
+
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
+
                 }
+
             }
+
+            Behavior on height {
+                enabled: Config.animDuration > 0
+
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+
+            }
+
         }
+
     }
+
+    Behavior on mainRowMargin {
+        enabled: Config.animDuration > 0
+
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.2
+        }
+
+    }
+
+    Behavior on implicitWidth {
+        enabled: Config.animDuration > 0
+
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.2
+        }
+
+    }
+
+    Behavior on implicitHeight {
+        enabled: Config.animDuration > 0
+
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+
+    }
+
 }

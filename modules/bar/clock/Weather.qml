@@ -150,6 +150,12 @@ StyledRect {
     }
 
     function updateWeather() {
+        if (!LocationService.active || !Config.system.location.allowWeatherApp) {
+            weatherContainer.weatherVisible = false;
+            return;
+        }
+        LocationService.reportAccess("Weather Widget");
+
         var location = Config.weather.location.trim();
         if (location.length === 0) {
             geoipProcess.command = ["curl", "-s", "https://ipapi.co/json/"];
@@ -340,6 +346,20 @@ StyledRect {
             updateWeather();
         }
         function onUnitChanged() {
+            updateWeather();
+        }
+    }
+
+    Connections {
+        target: LocationService
+        function onActiveChanged() {
+            updateWeather();
+        }
+    }
+
+    Connections {
+        target: Config.system.location
+        function onAllowWeatherAppChanged() {
             updateWeather();
         }
     }

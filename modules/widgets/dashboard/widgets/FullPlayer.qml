@@ -371,7 +371,7 @@ StyledRect {
             Layout.alignment: Qt.AlignHCenter
             spacing: 2
 
-            Text {
+            MarqueeText {
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible ? implicitHeight : 0
                 text: player.hasActivePlayer ? (MprisController.activePlayer?.trackTitle ?? "") : "Nothing Playing"
@@ -380,12 +380,10 @@ StyledRect {
                 font.weight: Font.Bold
                 font.family: Config.theme.font
                 horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
                 visible: text !== ""
             }
 
-            Text {
+            MarqueeText {
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible ? implicitHeight : 0
                 text: player.hasActivePlayer ? (MprisController.activePlayer?.trackAlbum ?? "") : "Enjoy the silence"
@@ -393,13 +391,11 @@ StyledRect {
                 font.pixelSize: Config.theme.fontSize
                 font.family: Config.theme.font
                 horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
                 opacity: 0.7
                 visible: text !== ""
             }
 
-            Text {
+            MarqueeText {
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible ? implicitHeight : 0
                 text: player.hasActivePlayer ? (MprisController.activePlayer?.trackArtist ?? "") : "¯\\_(ツ)_/¯"
@@ -407,8 +403,6 @@ StyledRect {
                 font.pixelSize: Config.theme.fontSize
                 font.family: Config.theme.font
                 horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
                 opacity: 0.7
                 visible: text !== ""
             }

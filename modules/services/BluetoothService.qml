@@ -166,19 +166,15 @@ Singleton {
     function startDiscovery(): void {
         if (enabled && !SuspendManager.isSuspending) {
             discovering = true;
-            runAsync(["bluetoothctl", "scan", "on"]).then(() => {
-                scanTimer.restart();
-            }).catch(e => {
-                discovering = false;
-            });
+            scanProcess.running = true;
+            scanTimer.restart();
         }
     }
 
     function stopDiscovery(): void {
         discovering = false;
-        runAsync(["bluetoothctl", "scan", "off"]).then(() => {
-            scanTimer.stop();
-        }).catch(e => {});
+        scanProcess.running = false;
+        scanTimer.stop();
     }
 
     function connectDevice(address: string): void {
@@ -365,6 +361,15 @@ Singleton {
                     root.updateFriendlyList();
                 }
             });
+        }
+    }
+
+    Process {
+        id: scanProcess
+        command: ["bash", "-c", "(echo 'scan on'; sleep 15) | bluetoothctl"]
+        running: false
+        onExited: {
+            root.discovering = false;
         }
     }
 

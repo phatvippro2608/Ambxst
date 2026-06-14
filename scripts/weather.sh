@@ -16,7 +16,7 @@ http_get() {
 	local response=""
 
 	while [[ $attempt -le $MAX_RETRIES ]]; do
-		response=$(curl -s --max-time 15 --retry 2 --retry-delay 1 "$url" 2>/dev/null)
+		response=$(curl -s -H "User-Agent: AmbxstWeatherService/1.0" --max-time 15 --retry 2 --retry-delay 1 "$url" 2>/dev/null)
 		if [[ -n "$response" && "$response" != "null" ]]; then
 			echo "$response"
 			return 0
@@ -50,9 +50,56 @@ get_geoip_coords() {
 	echo "$lat,$lon"
 }
 
+# Function to geocode using Nominatim (OpenStreetMap)
+geocode_nominatim() {
+	local query="$1"
+	local encoded_query
+	encoded_query=$(echo -n "$query" | jq -sRr @uri)
+
+	local response
+	response=$(http_get "https://nominatim.openstreetmap.org/search?q=${encoded_query}&format=json&limit=1")
+
+	if [[ -z "$response" || "$response" == "[]" ]]; then
+		return 1
+	fi
+
+	local lat lon
+	lat=$(echo "$response" | jq -r '.[0].lat // empty')
+	lon=$(echo "$response" | jq -r '.[0].lon // empty')
+
+	if [[ -z "$lat" || -z "$lon" ]]; then
+		return 1
+	fi
+
+	echo "$lat,$lon"
+	return 0
+}
+
 # Function to geocode a city name
 geocode_city() {
 	local city="$1"
+	local coords=""
+
+	# Try Nominatim with progressive comma fallback
+	local current_query="$city"
+	while [[ -n "$current_query" ]]; do
+		coords=$(geocode_nominatim "$current_query")
+		if [[ -n "$coords" ]]; then
+			echo "$coords"
+			return 0
+		fi
+
+		# Strip the first part before the first comma
+		if [[ "$current_query" == *","* ]]; then
+			current_query="${current_query#*,}"
+			# Trim leading/trailing whitespace
+			current_query=$(echo "$current_query" | xargs)
+		else
+			current_query=""
+		fi
+	done
+
+	# Final fallback to Open-Meteo geocoding
 	local encoded_city
 	encoded_city=$(echo -n "$city" | jq -sRr @uri)
 

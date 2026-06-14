@@ -338,7 +338,7 @@ Singleton {
                 newNotifObject.popup = true;
                 newNotifObject.timer = notifTimerComponent.createObject(root, {
                     "id": newNotifObject.id,
-                    "interval": notification.expireTimeout < 0 ? 5000 : notification.expireTimeout // Aumentado para notch
+                    "interval": (notification.expireTimeout <= 0) ? (notification.urgency === NotificationUrgency.Critical ? 0 : 5000) : notification.expireTimeout // Aumentado para notch
                 });
             }
 

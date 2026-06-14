@@ -1,45 +1,45 @@
+import "../controls"
 import QtQuick
 import QtQuick.Layouts
-import qs.modules.theme
+import qs.config
 import qs.modules.components
 import qs.modules.services
-import qs.config
-import "../controls"
+import qs.modules.theme
 
 StyledRect {
     id: root
+
+    property int expandedPanel: -1 // -1: none, 0: wifi, 1: bluetooth
+
+    function togglePanel(index) {
+        if (root.expandedPanel === index)
+            root.expandedPanel = -1;
+        else
+            root.expandedPanel = index;
+    }
+
     variant: "pane"
     Layout.alignment: Qt.AlignHCenter
     implicitWidth: internalBgRect.implicitWidth + 8
     implicitHeight: columnLayout.implicitHeight + 8
     radius: Styling.radius(4)
-    
-    property int expandedPanel: -1 // -1: none, 0: wifi, 1: bluetooth
-    
     onVisibleChanged: {
-        if (!visible) {
+        if (!visible)
             root.expandedPanel = -1;
-        } else {
+        else
             BluetoothService.initialize();
-        }
-    }
-    
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
-        }
     }
 
     ColumnLayout {
         id: columnLayout
+
         anchors.fill: parent
         anchors.margins: 4
         spacing: 0
-        
+
         StyledRect {
             id: internalBgRect
+
             variant: "internalbg"
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: buttonRow.implicitWidth + 8
@@ -48,6 +48,7 @@ StyledRect {
 
             RowLayout {
                 id: buttonRow
+
                 anchors.centerIn: parent
                 spacing: 4
 
@@ -57,15 +58,20 @@ StyledRect {
                     iconName: {
                         if (!NetworkService.wifiEnabled)
                             return Icons.wifiOff;
+
                         const strength = NetworkService.networkStrength;
                         if (strength === 0)
                             return Icons.wifiHigh;
+
                         if (strength < 25)
                             return Icons.wifiNone;
+
                         if (strength < 50)
                             return Icons.wifiLow;
+
                         if (strength < 75)
                             return Icons.wifiMedium;
+
                         return Icons.wifiHigh;
                     }
                     isActive: NetworkService.wifiEnabled || root.expandedPanel === 0
@@ -81,16 +87,20 @@ StyledRect {
                     iconName: {
                         if (!BluetoothService.enabled)
                             return Icons.bluetoothOff;
+
                         if (BluetoothService.connected)
                             return Icons.bluetoothConnected;
+
                         return Icons.bluetooth;
                     }
                     isActive: BluetoothService.enabled || root.expandedPanel === 1
                     tooltipText: {
                         if (!BluetoothService.enabled)
                             return "Bluetooth: Off";
+
                         if (BluetoothService.connected)
                             return "Bluetooth: Connected";
+
                         return "Bluetooth: On";
                     }
                     onClicked: BluetoothService.toggle()
@@ -124,26 +134,28 @@ StyledRect {
                     tooltipText: GameModeService.toggled ? "Game Mode: On" : "Game Mode: Off"
                     onClicked: GameModeService.toggle()
                 }
+
+                ControlButton {
+                    Layout.preferredWidth: 48
+                    Layout.preferredHeight: 48
+                    iconName: Icons.mapPin
+                    isActive: LocationService.active
+                    tooltipText: LocationService.active ? "Location Services: On" : "Location Services: Off"
+                    onClicked: LocationService.toggle()
+                }
+
             }
+
         }
-        
+
         Item {
             id: panelArea
+
             Layout.fillWidth: true
-            Layout.preferredHeight: root.expandedPanel !== -1 ? root.width - 8 : 0 
+            Layout.preferredHeight: root.expandedPanel !== -1 ? root.width - 8 : 0
             clip: true
             opacity: root.expandedPanel !== -1 ? 1 : 0
-            
-            Behavior on Layout.preferredHeight {
-                enabled: Config.animDuration > 0
-                NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-            }
-            
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-            }
-            
+
             StyledRect {
                 variant: "internalbg"
                 anchors.fill: parent
@@ -153,58 +165,120 @@ StyledRect {
 
                 Item {
                     id: panelStack
+
                     anchors.fill: parent
                     anchors.margins: 8 // Extra margin for content
-                    
+
                     Loader {
                         id: wifiLoader
+
                         anchors.fill: parent
                         active: root.expandedPanel === 0
                         source: "../controls/WifiPanel.qml"
                         asynchronous: true
-                        
                         opacity: root.expandedPanel === 0 ? 1 : 0
                         x: root.expandedPanel === 0 ? 0 : (root.expandedPanel === 1 ? -width : width)
-                        
                         onLoaded: {
-                            if (item) {
+                            if (item)
                                 item.maxContentWidth = width;
-                            }
+
                         }
 
-                        Behavior on opacity { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
-                        Behavior on x { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+
+                        }
+
+                        Behavior on x {
+                            enabled: Config.animDuration > 0
+
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+
+                        }
+
                     }
 
                     Loader {
                         id: bluetoothLoader
+
                         anchors.fill: parent
                         active: root.expandedPanel === 1
                         source: "../controls/BluetoothPanel.qml"
                         asynchronous: true
-                        
                         opacity: root.expandedPanel === 1 ? 1 : 0
                         x: root.expandedPanel === 1 ? 0 : (root.expandedPanel === 0 ? width : -width)
-                        
                         onLoaded: {
-                            if (item) {
+                            if (item)
                                 item.maxContentWidth = width;
-                            }
+
                         }
 
-                        Behavior on opacity { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
-                        Behavior on x { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } }
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+
+                        }
+
+                        Behavior on x {
+                            enabled: Config.animDuration > 0
+
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+
+                        }
+
                     }
+
                 }
+
             }
+
+            Behavior on Layout.preferredHeight {
+                enabled: Config.animDuration > 0
+
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+
+            }
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+
+            }
+
         }
+
     }
-    
-    function togglePanel(index) {
-        if (root.expandedPanel === index) {
-            root.expandedPanel = -1;
-        } else {
-            root.expandedPanel = index;
+
+    Behavior on implicitHeight {
+        enabled: Config.animDuration > 0
+
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutCubic
         }
+
     }
+
 }
