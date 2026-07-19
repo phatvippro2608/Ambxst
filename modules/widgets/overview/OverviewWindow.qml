@@ -178,6 +178,9 @@ Item {
         z: 10
     }
 
+    property real pressX: 0
+    property real pressY: 0
+
     MouseArea {
         id: dragArea
         anchors.fill: parent
@@ -189,6 +192,8 @@ Item {
         onExited: { root.hovered = false; if (GlobalStates.hoveredWindowAddress === windowData?.address) GlobalStates.hoveredWindowAddress = ""; }
 
         onPressed: mouse => {
+            root.pressX = mouse.x;
+            root.pressY = mouse.y;
             root.pressed = true;
             root.Drag.active = true;
             root.Drag.source = root;
@@ -202,7 +207,17 @@ Item {
             root.pressed = false;
             root.Drag.active = false;
 
+            const moveDist = Math.hypot(mouse.x - root.pressX, mouse.y - root.pressY);
+
             if (mouse.button === Qt.LeftButton) {
+                // Handle click focus if mouse didn't drag significantly
+                if (moveDist < 10 && Math.abs(root.x - root.initX) < 10 && Math.abs(root.y - root.initY) < 10) {
+                    root.x = root.initX;
+                    root.y = root.initY;
+                    root.windowClicked();
+                    return;
+                }
+
                 if (targetWorkspace === -1) {
                     const absX = root.x + root.width / 2;
                     const absY = root.y + root.height / 2;
