@@ -59,11 +59,23 @@ Item {
                     height: 24
                     radius: Styling.radius(0)
                     clip: true
+                    color: "transparent"
 
                     Image {
+                        id: avatarImage
                         anchors.fill: parent
                         source: `file://${Quickshell.env("HOME")}/.face.icon`
                         fillMode: Image.PreserveAspectCrop
+                        visible: status === Image.Ready
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Icons.user
+                        font.family: Icons.font
+                        font.pixelSize: 14
+                        color: userHostArea.pressed ? Colors.overBackground : (userHostArea.containsMouse ? Styling.srItem("overprimary") : Colors.overBackground)
+                        visible: avatarImage.status !== Image.Ready
                     }
                 }
             }

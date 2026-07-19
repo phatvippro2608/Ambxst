@@ -5,6 +5,7 @@ import QtQml
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.modules.globals
 
 Singleton {
     id: root
@@ -13,6 +14,7 @@ Singleton {
     property string lockCmd: Config.system.idle.general.lock_cmd ?? "ambxst lock"
     property string beforeSleepCmd: Config.system.idle.general.before_sleep_cmd ?? "loginctl lock-session"
     property string afterSleepCmd: Config.system.idle.general.after_sleep_cmd ?? "ambxst screen on"
+    property bool triggeredLockScreenOff: false
 
     // Login Lock Daemon
     // Helper script that listens to Lock signal and executes lockCmd from config
@@ -94,6 +96,14 @@ Singleton {
         repeat: true
         onTriggered: {
             root.elapsedIdleTime += 1;
+            
+            // If locked, turn screen off after 10 seconds of idle
+            if (GlobalStates.lockscreenVisible && root.elapsedIdleTime >= 10 && !root.triggeredLockScreenOff) {
+                console.log("IdleService: Lockscreen is visible, turning screen off after 10s idle.");
+                root.executeCommand("ambxst screen off");
+                root.triggeredLockScreenOff = true;
+            }
+            
             root.checkListeners();
         }
     }
@@ -136,6 +146,13 @@ Singleton {
     }
 
     function resetIdleState() {
+        // If we turned off the screen due to lockscreen idle, turn it back on
+        if (root.triggeredLockScreenOff) {
+            console.log("IdleService: Lockscreen activity detected, turning screen on.");
+            root.executeCommand("ambxst screen on");
+            root.triggeredLockScreenOff = false;
+        }
+
         let listeners = Config.system.idle.listeners;
 
         // Execute resume commands for all triggered listeners

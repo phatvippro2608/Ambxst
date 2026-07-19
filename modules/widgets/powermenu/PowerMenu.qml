@@ -32,7 +32,7 @@ ActionGrid {
         {
             icon: Icons.suspend,
             tooltip: "Suspend",
-            command: "systemctl suspend"
+            command: "ambxst suspend"
         },
         {
             icon: Icons.hibernate,

@@ -4,8 +4,7 @@ import qs.modules.services
 
 Item {
     implicitWidth: 900
-    implicitHeight: 112 + 48 * 6
-
+    implicitHeight: dashboardItem.implicitHeight
 
     readonly property int leftPanelWidth: 270
 

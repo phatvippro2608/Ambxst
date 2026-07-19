@@ -6,32 +6,33 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import "modules/tools"
+import qs.config
 import qs.modules.bar
 import qs.modules.bar.workspaces
-import qs.modules.notifications
-import qs.modules.widgets.dashboard.wallpapers
-
+import qs.modules.components
+import qs.modules.corners
+import qs.modules.desktop
+import qs.modules.dock
+import qs.modules.frame
+import qs.modules.globals
+import qs.modules.lockscreen
 import qs.modules.notch
+import qs.modules.notifications
+import qs.modules.services
+import qs.modules.shell
+import qs.modules.shell.osd
+import qs.modules.widgets.dashboard.wallpapers
+import qs.modules.widgets.displayselect
 import qs.modules.widgets.overview
 import qs.modules.widgets.presets
-import qs.modules.services
-import qs.modules.corners
-import qs.modules.frame
-import qs.modules.components
-import qs.modules.desktop
-import qs.modules.lockscreen
-import qs.modules.dock
-import qs.modules.globals
-import qs.modules.shell
-import qs.config
-import qs.modules.shell.osd
-import "modules/tools"
 
 ShellRoot {
     id: root
 
     ContextMenu {
         id: contextMenu
+
         screen: Quickshell.screens[0]
         Component.onCompleted: Visibilities.setContextMenu(contextMenu)
     }
@@ -41,12 +42,17 @@ ShellRoot {
 
         Loader {
             id: wallpaperLoader
-            active: true
+
             required property ShellScreen modelData
+
+            active: true
+
             sourceComponent: Wallpaper {
                 screen: wallpaperLoader.modelData
             }
+
         }
+
     }
 
     Variants {
@@ -54,12 +60,17 @@ ShellRoot {
 
         Loader {
             id: desktopLoader
-            active: Config.desktop.enabled && SuspendManager.wakeReady
+
             required property ShellScreen modelData
+
+            active: Config.desktop.enabled && SuspendManager.wakeReady
+
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
             }
+
         }
+
     }
 
     // Visual panel & reservations
@@ -68,25 +79,28 @@ ShellRoot {
 
         Item {
             id: screenShellContainer
+
             required property ShellScreen modelData
 
             // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
                 id: unifiedPanel
+
                 targetScreen: screenShellContainer.modelData
             }
 
             Loader {
                 active: Config.theme.enableCorners && Config.roundness > 0
+
                 sourceComponent: ScreenCorners {
                     screen: screenShellContainer.modelData
                 }
+
             }
 
             // Exclusive zone reservations
             ReservationWindows {
                 screen: screenShellContainer.modelData
-
                 // Bar status for reservations
                 barEnabled: {
                     const list = (Config.bar && Config.bar.screenList !== undefined ? Config.bar.screenList : []);
@@ -96,7 +110,6 @@ ShellRoot {
                 barPinned: unifiedPanel.pinned
                 barSize: (unifiedPanel.barPosition === "left" || unifiedPanel.barPosition === "right") ? unifiedPanel.barTargetWidth : unifiedPanel.barTargetHeight
                 barOuterMargin: unifiedPanel.barOuterMargin
-
                 // Dock status for reservations
                 dockEnabled: {
                     if (!((Config.dock && Config.dock.enabled !== undefined ? Config.dock.enabled : false)) || (Config.dock && Config.dock.theme !== undefined ? Config.dock.theme : "default") === "integrated")
@@ -105,23 +118,24 @@ ShellRoot {
                     const list = (Config.dock && Config.dock.screenList !== undefined ? Config.dock.screenList : []);
                     if (!list || list.length === 0)
                         return true;
+
                     return list.indexOf(screenShellContainer.modelData.name) !== -1;
                 }
                 dockPosition: unifiedPanel.dockPosition
                 dockPinned: unifiedPanel.dockPinned
                 dockHeight: unifiedPanel.dockHeight
                 containBar: unifiedPanel.containBar
-
                 frameEnabled: (Config.bar && Config.bar.frameEnabled !== undefined ? Config.bar.frameEnabled : false)
                 frameThickness: (Config.bar && Config.bar.frameThickness !== undefined ? Config.bar.frameThickness : 6)
-
                 // Sidebar status for reservations
                 sidebarEnabled: GlobalStates.assistantVisible && screenShellContainer.modelData.name === GlobalStates.assistantScreenName
                 sidebarPinned: GlobalStates.assistantPinned
                 sidebarWidth: GlobalStates.assistantWidth
                 sidebarPosition: GlobalStates.assistantPosition
             }
+
         }
+
     }
 
     // Overview popup
@@ -131,17 +145,25 @@ ShellRoot {
             const list = (Config.bar && Config.bar.screenList !== undefined ? Config.bar.screenList : []);
             if (!list || list.length === 0)
                 return screens;
-            return screens.filter(screen => list.indexOf(screen.name) !== -1);
+
+            return screens.filter((screen) => {
+                return list.indexOf(screen.name) !== -1;
+            });
         }
 
         Loader {
             id: overviewLoader
-            active: ((Config.overview && Config.overview.enabled !== undefined ? Config.overview.enabled : true)) && SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false)
+
             required property ShellScreen modelData
+
+            active: ((Config.overview && Config.overview.enabled !== undefined ? Config.overview.enabled : true)) && SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false)
+
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
             }
+
         }
+
     }
 
     // Presets popup
@@ -151,26 +173,65 @@ ShellRoot {
             const list = (Config.bar && Config.bar.screenList !== undefined ? Config.bar.screenList : []);
             if (!list || list.length === 0)
                 return screens;
-            return screens.filter(screen => list.indexOf(screen.name) !== -1);
+
+            return screens.filter((screen) => {
+                return list.indexOf(screen.name) !== -1;
+            });
         }
 
         Loader {
             id: presetsLoader
-            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false)
+
             required property ShellScreen modelData
+
+            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false)
+
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
             }
+
         }
+
+    }
+
+    // Display Select popup
+    Variants {
+        model: {
+            const screens = Quickshell.screens;
+            const list = (Config.bar && Config.bar.screenList !== undefined ? Config.bar.screenList : []);
+            if (!list || list.length === 0)
+                return screens;
+
+            return screens.filter((screen) => {
+                return list.indexOf(screen.name) !== -1;
+            });
+        }
+
+        Loader {
+            id: displaySelectLoader
+
+            required property ShellScreen modelData
+
+            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).displaySelect : false)
+
+            sourceComponent: DisplaySelectPopup {
+                screen: displaySelectLoader.modelData
+            }
+
+        }
+
     }
 
     // Secure WlSessionLock lockscreen
     WlSessionLock {
         id: sessionLock
+
         locked: GlobalStates.lockscreenVisible
 
         // Surface auto-created per screen
-        LockScreen {}
+        LockScreen {
+        }
+
     }
 
     CompositorConfig {
@@ -183,12 +244,17 @@ ShellRoot {
 
         Loader {
             id: screenshotLoader
-            active: GlobalStates.screenshotToolVisible
+
             required property ShellScreen modelData
+
+            active: GlobalStates.screenshotToolVisible
+
             sourceComponent: ScreenshotTool {
                 targetScreen: screenshotLoader.modelData
             }
+
         }
+
     }
 
     // Screenshot preview overlay
@@ -197,53 +263,61 @@ ShellRoot {
 
         Loader {
             id: screenshotOverlayLoader
-            active: SuspendManager.wakeReady
+
             required property ShellScreen modelData
+
+            active: SuspendManager.wakeReady
+
             sourceComponent: ScreenshotOverlay {
                 targetScreen: screenshotOverlayLoader.modelData
             }
+
         }
+
     }
 
     // Screen recording tool
     Loader {
         id: screenRecordLoader
+
         active: SuspendManager.wakeReady && GlobalStates.screenRecordToolVisible
         source: "modules/tools/ScreenrecordTool.qml"
-
         onLoaded: {
-            if (GlobalStates.screenRecordToolVisible && item) {
+            if (GlobalStates.screenRecordToolVisible && item)
                 item.open();
-            }
+
         }
 
         Connections {
-            target: GlobalStates
             function onScreenRecordToolVisibleChanged() {
                 if (screenRecordLoader.status === Loader.Ready) {
-                    if (GlobalStates.screenRecordToolVisible) {
+                    if (GlobalStates.screenRecordToolVisible)
                         screenRecordLoader.item.open();
-                    } else {
+                    else
                         screenRecordLoader.item.close();
-                    }
                 }
             }
+
+            target: GlobalStates
         }
 
         Connections {
+            function onVisibleChanged() {
+                if (!screenRecordLoader.item.visible && GlobalStates.screenRecordToolVisible)
+                    GlobalStates.screenRecordToolVisible = false;
+
+            }
+
             target: screenRecordLoader.item
             ignoreUnknownSignals: true
-            function onVisibleChanged() {
-                if (!screenRecordLoader.item.visible && GlobalStates.screenRecordToolVisible) {
-                    GlobalStates.screenRecordToolVisible = false;
-                }
-            }
         }
+
     }
 
     // Mirror tool
     Loader {
         id: mirrorLoader
+
         active: SuspendManager.wakeReady && GlobalStates.mirrorWindowVisible
         source: "modules/tools/MirrorWindow.qml"
     }
@@ -251,6 +325,7 @@ ShellRoot {
     // Settings
     Loader {
         id: settingsWindowLoader
+
         active: SuspendManager.wakeReady && GlobalStates.settingsWindowVisible
         source: "modules/widgets/config/SettingsWindow.qml"
     }
@@ -261,20 +336,27 @@ ShellRoot {
 
         Loader {
             id: osdLoader
-            active: SuspendManager.wakeReady
+
             required property ShellScreen modelData
+
+            active: SuspendManager.wakeReady
+
             sourceComponent: OSD {
                 targetScreen: osdLoader.modelData
             }
+
         }
+
     }
 
     // Init clipboard service
     Connections {
-        target: ClipboardService
-        function onListCompleted() {
         // Service initialized and ready
+
+        function onListCompleted() {
         }
+
+        target: ClipboardService
     }
 
     // Force service init at startup but defer it slightly so it doesn't block the UI
@@ -288,6 +370,7 @@ ShellRoot {
                 _ = IdleService.lockCmd; // Force init
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = PrinterService.printers; // Force init
+                _ = CalendarService.isAuthenticated; // Force init
                 _ = DisplayService.toString(); // Force init
             });
         }
@@ -304,4 +387,5 @@ ShellRoot {
             _ = LocationService.active;
         }
     }
+
 }

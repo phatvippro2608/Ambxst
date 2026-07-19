@@ -46,6 +46,7 @@ var ACTION_CATALOG = [
     { id: "ambxst.lens", label: "Open Lens", category: "Ambxst", dispatcher: "exec", argument: "ambxst run lens" },
     { id: "ambxst.reload", label: "Reload Ambxst", category: "Ambxst", dispatcher: "exec", argument: "ambxst reload" },
     { id: "ambxst.quit", label: "Quit Ambxst", category: "Ambxst", dispatcher: "exec", argument: "ambxst quit" },
+    { id: "ambxst.displaySelect", label: "Open Display Selector", category: "Ambxst", dispatcher: "exec", argument: "ambxst run displayselect" },
 
     { id: "window.close", label: "Close Window", category: "Window", dispatcher: "killactive", argument: "" },
     { id: "window.focus", label: "Focus Window", category: "Window", dispatcher: "movefocus", args: [{ key: "direction", label: "Direction", placeholder: "up/down/left/right", defaultValue: "up" }], argumentBuilder: function (args) {

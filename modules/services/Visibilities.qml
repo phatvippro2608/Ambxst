@@ -20,7 +20,7 @@ Singleton {
     property var contextMenu: null
     property bool playerMenuOpen: false
     property var openPopups: []
-    readonly property var moduleNames: ["launcher", "dashboard", "overview", "powermenu", "tools", "presets"]
+    readonly property var moduleNames: ["launcher", "dashboard", "overview", "powermenu", "tools", "presets", "displaySelect"]
 
     function setContextMenu(menu) {
         contextMenu = menu;
@@ -216,6 +216,7 @@ Singleton {
             property bool powermenu: false
             property bool tools: false
             property bool presets: false
+            property bool displaySelect: false
         }
     }
 

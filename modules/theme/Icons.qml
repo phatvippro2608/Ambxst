@@ -162,7 +162,7 @@ QtObject {
     // Misc
     readonly property string accept: ""
     readonly property string cancel: ""
-    readonly property string x: "\ue3e2"
+    readonly property string x: "\ue4f6"
     readonly property string magnifyingGlass: "\ue3bc"
     readonly property string plus: ""
     readonly property string minus: ""
@@ -265,4 +265,5 @@ QtObject {
     readonly property string thermometer: temperature
     readonly property string windowsLogo: terminalWindow
     readonly property string frameCorners: crop
+    readonly property string calendar: "📅"
 }

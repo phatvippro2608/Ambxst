@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.globals
+import qs.modules.services
 
 Singleton {
     id: root
@@ -518,22 +519,23 @@ Singleton {
             return;
         }
 
-        if (!LocationService.active || !Config.system.location.allowWeatherApp) {
-            console.log("WeatherService: Location access denied (Location Services disabled or Weather App not allowed)");
-            root.isLoading = false;
-            root.hasFailed = true;
-            root.dataAvailable = false;
-            return;
-        }
+        var locationStr = Config.weather.location || "";
+        var location = locationStr.trim();
 
-        LocationService.reportAccess("Weather Widget");
+        if (location === "") {
+            if (!LocationService.active || !Config.system.location.allowWeatherApp) {
+                console.log("WeatherService: Location access denied (Location Services disabled or Weather App not allowed) and no manual location set.");
+                root.isLoading = false;
+                root.hasFailed = true;
+                root.dataAvailable = false;
+                return;
+            }
+            LocationService.reportAccess("Weather Widget");
+        }
 
         root.isLoading = true;
         root.hasFailed = false;
 
-        var locationStr = Config.weather.location || "";
-        var location = locationStr.trim();
-        
         console.log("WeatherService: Fetching weather for '" + location + "'");
         
         weatherProcess.command = [scriptPath, location];

@@ -57,18 +57,15 @@ Singleton {
         lastAccessed = copy;
     }
 
-    // Initialize and keep in sync
+    // Initialize once on startup
     Timer {
-        id: syncTimer
+        id: startupTimer
 
         interval: 100
         running: true
-        repeat: true
+        repeat: false
         onTriggered: {
             root.syncState();
-            if (interval === 100)
-                interval = 5000;
-
         }
     }
 

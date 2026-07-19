@@ -7,6 +7,7 @@ import qs.config
 import qs.modules.components
 import qs.modules.globals
 import qs.modules.theme
+import qs.modules.services
 
 Item {
     // =====================
@@ -21,6 +22,29 @@ Item {
     property string currentSection: ""
 
     function geocodeAddress(addressText, callback) {
+        function reverseGeocode(lat, lon) {
+            var xhr = new XMLHttpRequest();
+            var url = "https://nominatim.openstreetmap.org/reverse?lat=" + lat + "&lon=" + lon + "&format=json";
+            xhr.open("GET", url, true);
+            xhr.setRequestHeader("User-Agent", "AmbxstWeatherService/1.0");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res && res.display_name) {
+                                callback(lat + "," + lon, null, res.display_name);
+                                return ;
+                            }
+                        } catch (e) {
+                        }
+                    }
+                    callback(lat + "," + lon, null, "Coordinates (" + lat + ", " + lon + ")");
+                }
+            };
+            xhr.send();
+        }
+
         function tryQuery(query) {
             if (!query) {
                 callback(null, "Không tìm thấy địa điểm.");
@@ -90,7 +114,8 @@ Item {
         var currentQuery = addressText.trim();
         var coordsRegex = /^-?[0-9]+\.?[0-9]*,-?[0-9]+\.?[0-9]*$/;
         if (coordsRegex.test(currentQuery)) {
-            callback(currentQuery, null, "Coordinates entered directly");
+            var parts = currentQuery.split(",");
+            reverseGeocode(parts[0].trim(), parts[1].trim());
             return ;
         }
         tryQuery(currentQuery);

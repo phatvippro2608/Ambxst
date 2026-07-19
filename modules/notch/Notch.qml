@@ -144,8 +144,7 @@ Item {
         Item {
             id: leftCornerMaskPart
 
-            anchors.top: notchContainer.position === "top" ? parent.top : undefined
-            anchors.bottom: notchContainer.position === "bottom" ? parent.bottom : undefined
+            y: notchContainer.position === "top" ? 0 : parent.height - height
             anchors.left: parent.left
             width: Config.notchTheme === "default" && Config.roundness > 0 ? Config.roundness + 4 : 0
             height: width
@@ -163,11 +162,10 @@ Item {
         Rectangle {
             id: centerMaskPart
 
-            anchors.top: notchContainer.position === "top" ? parent.top : undefined
-            anchors.bottom: notchContainer.position === "bottom" ? parent.bottom : undefined
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
             anchors.left: leftCornerMaskPart.right
             anchors.right: rightCornerMaskPart.left
-            height: parent.height
             color: "white"
             topLeftRadius: notchRect.topLeftRadius
             topRightRadius: notchRect.topRightRadius
@@ -179,8 +177,7 @@ Item {
         Item {
             id: rightCornerMaskPart
 
-            anchors.top: notchContainer.position === "top" ? parent.top : undefined
-            anchors.bottom: notchContainer.position === "bottom" ? parent.bottom : undefined
+            y: notchContainer.position === "top" ? 0 : parent.height - height
             anchors.right: parent.right
             width: Config.notchTheme === "default" && Config.roundness > 0 ? Config.roundness + 4 : 0
             height: width
@@ -486,14 +483,25 @@ Item {
         antialiasing: true
         visible: Config.notchTheme === "default" && borderWidth > 0 && !notchContainer.unifiedEffectActive
         onPaint: {
+            // This ends at (rCorner, rCorner)
+            // Note: Canvas arc is clockwise by default. To emulate the "RoundCorner" feel (inverted),
+            // we need to draw it such that it curves from (offset, yBottom) inwards to (rCorner, height-rCorner).
+            // Actually, let's mirror the top logic:
+            // Center at (offset, height - rCorner)
+            // Start angle: PI/2 (90 deg - bottom)
+            // End angle: 0 (0 deg - right)
+            // Counter-clockwise (true) to curve "in"
+
             if (Config.notchTheme !== "default")
                 return ;
- // Only draw for default theme
+
+            // Only draw for default theme
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
             if (borderWidth <= 0)
                 return ;
- // No outline when borderWidth is 0
+
+            // No outline when borderWidth is 0
             ctx.strokeStyle = borderColor;
             ctx.lineWidth = borderWidth;
             ctx.lineJoin = "round";
@@ -505,8 +513,6 @@ Item {
             var wCenter = notchRect.width;
             ctx.beginPath();
             if (notchContainer.position === "top") {
-                // This ends at (rCorner, rCorner)
-
                 var bl = notchRect.bottomLeftRadius;
                 var br = notchRect.bottomRightRadius;
                 var yBottom = height - offset;
@@ -538,14 +544,6 @@ Item {
                     ctx.arc(width - offset, rCorner, rCorner - offset, Math.PI, 3 * Math.PI / 2);
 
             } else {
-                // Note: Canvas arc is clockwise by default. To emulate the "RoundCorner" feel (inverted),
-                // we need to draw it such that it curves from (offset, yBottom) inwards to (rCorner, height-rCorner).
-                // Actually, let's mirror the top logic:
-                // Center at (offset, height - rCorner)
-                // Start angle: PI/2 (90 deg - bottom)
-                // End angle: 0 (0 deg - right)
-                // Counter-clockwise (true) to curve "in"
-
                 // Bottom position
                 var tl = notchRect.topLeftRadius;
                 var tr = notchRect.topRightRadius;
@@ -661,8 +659,8 @@ Item {
 
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1
+            easing.type: (isExpanded || hasActiveNotifications) ? Easing.OutBack : Easing.OutQuart
+            easing.overshoot: (isExpanded || hasActiveNotifications) ? 1.2 : 1
         }
 
     }
@@ -672,8 +670,8 @@ Item {
 
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1
+            easing.type: (isExpanded || hasActiveNotifications) ? Easing.OutBack : Easing.OutQuart
+            easing.overshoot: (isExpanded || hasActiveNotifications) ? 1.2 : 1
         }
 
     }

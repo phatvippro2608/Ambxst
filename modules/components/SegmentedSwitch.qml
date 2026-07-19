@@ -11,18 +11,34 @@ StyledRect {
     id: root
     variant: "common"
     radius: Styling.radius(-4)
+    enableBorder: false
 
     // Model: array of { icon: "...", tooltip: "..." } or just strings for text labels
     property var options: []
     property int currentIndex: 0
     property int buttonSize: 28
-    property int spacing: 2
-    property int padding: 2
+    property int spacing: 0
+    property int padding: 0
+
+    property color activeTextColor: Colors.overPrimary
+    property color inactiveTextColor: Colors.primary
+    property color borderColor: Colors.primary
+    property color separatorColor: Colors.primary
 
     signal indexChanged(int index)
 
     implicitWidth: buttonsRow.implicitWidth + padding * 2
     implicitHeight: Math.max(buttonSize, buttonsRow.implicitHeight) + padding * 2
+
+    // Outer border overlay to match the mockup
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: root.borderColor
+        border.width: 1
+        radius: root.radius
+        z: 2
+    }
 
     Item {
         anchors.fill: parent
@@ -31,11 +47,12 @@ StyledRect {
         // Sliding highlight
         StyledRect {
             id: highlight
-            variant: "focus"
+            variant: "primary"
+            enableBorder: false
             z: 0
-            radius: Styling.radius(-6)
+            radius: root.radius
 
-            property Item activeItem: repeater.itemAt(root.currentIndex)
+            property Item activeItem: (repeater && repeater.count > 0 && root.currentIndex >= 0 && root.currentIndex < repeater.count) ? repeater.itemAt(root.currentIndex) : null
             width: activeItem ? activeItem.width : root.buttonSize
             height: parent.height
             x: activeItem ? activeItem.x : 0
@@ -74,70 +91,87 @@ StyledRect {
                     required property int index
 
                     Layout.fillHeight: true
+                    Layout.fillWidth: true
                     Layout.minimumWidth: root.buttonSize
-                    Layout.preferredWidth: contentRow.implicitWidth + 16 // Add some padding
+                    Layout.preferredWidth: 1
 
                     focusPolicy: Qt.NoFocus
                     hoverEnabled: true
                     flat: true
 
+                    // Vertical separator between segments
+                    Rectangle {
+                        visible: optionButton.index > 0 && root.currentIndex !== optionButton.index && root.currentIndex !== optionButton.index - 1
+                        width: 1
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 4
+                        anchors.bottomMargin: 4
+                        color: root.separatorColor
+                        opacity: 0.3
+                    }
+
                     background: Rectangle {
                         color: "transparent"
                     }
 
-                    contentItem: RowLayout {
-                        id: contentRow
-                        anchors.centerIn: parent
-                        spacing: 8
+                    contentItem: Item {
+                        id: buttonContent
 
-                        // Image Icon
-                        Image {
-                            mipmap: true
-                            visible: typeof optionButton.modelData === "object" && !!optionButton.modelData.image
-                            source: visible ? optionButton.modelData.image : ""
-                            sourceSize.width: 16
-                            sourceSize.height: 16
-                            width: 16
-                            height: 16
-                            fillMode: Image.PreserveAspectFit
-                            opacity: root.currentIndex === optionButton.index ? 1.0 : 0.7
-                        }
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 8
 
-                        // Font Icon
-                        Text {
-                            visible: typeof optionButton.modelData === "object" && !!optionButton.modelData.icon && !optionButton.modelData.image
-                            text: visible ? optionButton.modelData.icon : ""
-                            color: root.currentIndex === optionButton.index ? Styling.srItem("overprimary") : Colors.overBackground
-                            font.family: Icons.font
-                            font.pixelSize: 14
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
+                            // Image Icon
+                            Image {
+                                mipmap: true
+                                visible: typeof optionButton.modelData === "object" && !!optionButton.modelData.image
+                                source: visible ? optionButton.modelData.image : ""
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                width: 16
+                                height: 16
+                                fillMode: Image.PreserveAspectFit
+                                opacity: root.currentIndex === optionButton.index ? 1.0 : 0.7
+                            }
 
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutCubic
+                            // Font Icon
+                            Text {
+                                visible: typeof optionButton.modelData === "object" && !!optionButton.modelData.icon && !optionButton.modelData.image
+                                text: visible ? optionButton.modelData.icon : ""
+                                color: root.currentIndex === optionButton.index ? root.activeTextColor : root.inactiveTextColor
+                                font.family: Icons.font
+                                font.pixelSize: 14
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+
+                                Behavior on color {
+                                    enabled: Config.animDuration > 0
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutCubic
+                                    }
                                 }
                             }
-                        }
 
-                        // Label
-                        Text {
-                            visible: typeof optionButton.modelData !== "object" || !!optionButton.modelData.label
-                            text: typeof optionButton.modelData === "object" ? (optionButton.modelData.label || "") : optionButton.modelData
-                            color: root.currentIndex === optionButton.index ? Styling.srItem("overprimary") : Colors.overBackground
-                            font.family: Config.theme.font
-                            font.pixelSize: 14
-                            font.weight: root.currentIndex === optionButton.index ? Font.DemiBold : Font.Normal
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
+                            // Label
+                            Text {
+                                visible: typeof optionButton.modelData !== "object" || !!optionButton.modelData.label
+                                text: typeof optionButton.modelData === "object" ? (optionButton.modelData.label || "") : optionButton.modelData
+                                color: root.currentIndex === optionButton.index ? root.activeTextColor : root.inactiveTextColor
+                                font.family: Config.theme.font
+                                font.pixelSize: 14
+                                font.weight: root.currentIndex === optionButton.index ? Font.DemiBold : Font.Normal
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
 
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutCubic
+                                Behavior on color {
+                                    enabled: Config.animDuration > 0
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutCubic
+                                    }
                                 }
                             }
                         }

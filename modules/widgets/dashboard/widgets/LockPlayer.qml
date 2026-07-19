@@ -62,6 +62,7 @@ StyledRect {
             blurMax: 32
             blur: 0.75
             opacity: (MprisController.activePlayer || wallpaperPath !== "") ? 1.0 : 0.0
+            visible: opacity > 0
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {

@@ -18,14 +18,6 @@ Item {
     implicitWidth: hovered ? 420 : 320
     implicitHeight: mainColumn.implicitHeight
 
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
-        }
-    }
 
     property var currentNotification: {
         return (Notifications.popupList.length > currentIndex && currentIndex >= 0) ? Notifications.popupList[currentIndex] : (Notifications.popupList.length > 0 ? Notifications.popupList[0] : null);

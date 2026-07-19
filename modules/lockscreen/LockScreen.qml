@@ -44,7 +44,7 @@ WlSessionLockSurface {
 
         // Animación de opacidad (visibilidad)
         opacity: startAnim ? 1 : 0
-        visible: true
+        visible: opacity > 0
 
         Behavior on opacity {
             enabled: Config.animDuration > 0
@@ -740,8 +740,16 @@ WlSessionLockSurface {
 
     // Initialize when component is created (when lock becomes active)
     Component.onCompleted: {
-        // Capture screen immediately
-        screencopyBackground.captureFrame();
+        // Capture screen on next tick to avoid crashing when outputs are turning off
+        Qt.callLater(() => {
+            try {
+                if (screencopyBackground) {
+                    screencopyBackground.captureFrame();
+                }
+            } catch (e) {
+                console.warn("Screencopy capture failed (likely suspend):", e);
+            }
+        });
 
         // Start animations
         startAnim = true;

@@ -253,8 +253,8 @@ Item {
     Item {
         id: notchRegionContainer
 
-        width: Math.max(notchAnimationContainer.width, notificationPopupContainer.visible ? notificationPopupContainer.width : 0)
-        height: notchAnimationContainer.height + (notificationPopupContainer.visible ? notificationPopupContainer.height + notificationPopupContainer.anchors.topMargin : 0)
+        width: Math.max(notchAnimationContainer.width, notificationPopupContainer.height > 0 ? notificationPopupContainer.width : 0)
+        height: notchAnimationContainer.height + (notificationPopupContainer.height > 0 ? notificationPopupContainer.height + 4 : 0)
         x: (parent.width - width) / 2
         y: root.notchPosition === "top" ? 0 : parent.height - height
 
@@ -270,10 +270,9 @@ Item {
             id: notchAnimationContainer
 
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: root.notchPosition === "top" ? parent.top : undefined
-            anchors.bottom: root.notchPosition === "bottom" ? parent.bottom : undefined
+            y: root.notchPosition === "top" ? 0 : (notificationPopupContainer.height > 0 ? notificationPopupContainer.height + 4 : 0)
             width: notchContainer.width
-            height: notchContainer.height + (root.notchPosition === "top" ? notchContainer.anchors.topMargin : notchContainer.anchors.bottomMargin)
+            height: notchContainer.height + notchContainer.verticalMargin
             // Opacity animation
             opacity: root.reveal ? 1 : 0
 
@@ -285,14 +284,12 @@ Item {
                 id: notchContainer
 
                 readonly property int frameOffset: (Config.bar && Config.bar.frameEnabled && !root.activeWindowFullscreen) ? ((Config.bar.frameThickness !== undefined) ? Config.bar.frameThickness : 6) : 0
+                readonly property int verticalMargin: (Config.notchTheme === "island" ? 4 : 0) + frameOffset
 
                 unifiedEffectActive: root.unifiedEffectActive
                 parentHovered: root.isMouseOverNotch
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: root.notchPosition === "top" ? parent.top : undefined
-                anchors.bottom: root.notchPosition === "bottom" ? parent.bottom : undefined
-                anchors.topMargin: (root.notchPosition === "top" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (root.notchPosition === "top" ? frameOffset : 0)
-                anchors.bottomMargin: (root.notchPosition === "bottom" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (root.notchPosition === "bottom" ? frameOffset : 0)
+                y: root.notchPosition === "top" ? verticalMargin : 0
                 defaultViewComponent: defaultViewComponent
                 launcherViewComponent: null
                 dashboardViewComponent: null
@@ -317,10 +314,7 @@ Item {
                 variant: "bg"
                 anchors.left: notchContainer.right
                 anchors.leftMargin: 8
-                anchors.top: root.notchPosition === "top" ? parent.top : undefined
-                anchors.topMargin: root.notchPosition === "top" ? notchContainer.anchors.topMargin : 0
-                anchors.bottom: root.notchPosition === "bottom" ? parent.bottom : undefined
-                anchors.bottomMargin: root.notchPosition === "bottom" ? notchContainer.anchors.bottomMargin : 0
+                y: notchContainer.y
                 visible: opacity > 0
                 opacity: (hasNotifications && !root.screenNotchOpen && !root.hasActiveNotifications) ? 1 : 0
                 clip: true
@@ -401,24 +395,22 @@ Item {
 
             property bool popupHovered: false
             readonly property bool shouldShowNotificationPopup: {
+                // Solo ocultar si estamos en el widgets tab (dashboard tab 0) Y mostrando el launcher (widgetsTab index 0)
+
                 // Mostrar solo si hay notificaciones y el notch esta expandido
                 if (!root.hasActiveNotifications || !root.screenNotchOpen)
                     return false;
 
                 // NO mostrar si estamos en el launcher (widgets tab con currentTab === 0)
                 if (screenVisibilities.dashboard)
-                    // Solo ocultar si estamos en el widgets tab (dashboard tab 0) Y mostrando el launcher (widgetsTab index 0)
                     return !(GlobalStates.dashboardCurrentTab === 0 && GlobalStates.widgetsTabCurrentIndex === 0);
 
                 return true;
             }
 
             variant: "bg"
-            anchors.top: root.notchPosition === "top" ? notchAnimationContainer.bottom : undefined
-            anchors.bottom: root.notchPosition === "bottom" ? notchAnimationContainer.top : undefined
+            y: root.notchPosition === "top" ? notchAnimationContainer.height + 4 : 0
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: root.notchPosition === "top" ? 4 : 0
-            anchors.bottomMargin: root.notchPosition === "bottom" ? 4 : 0
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
             height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + 32 : notificationPopup.implicitHeight + 32) : 0
             clip: false

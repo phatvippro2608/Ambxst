@@ -6,7 +6,7 @@ import Quickshell.Io
 QtObject {
     id: root
 
-    property bool active: true
+    property bool active: false
     property var items: []
     property var imageDataById: ({})
     property var linkPreviewCache: ({})
@@ -36,7 +36,7 @@ QtObject {
         interval: 2000
         repeat: false
         onTriggered: {
-            if (root._initialized) {
+            if (root._initialized && root.active) {
                 root.list();
                 clipboardWatcher.running = true;
             }
@@ -47,7 +47,7 @@ QtObject {
 
     // Clipboard watcher using custom script that monitors changes
     property Process clipboardWatcher: Process {
-        running: root._initialized && !SuspendManager.isSuspending
+        running: root.active && root._initialized && !SuspendManager.isSuspending
         command: [watchScriptPath, checkScriptPath, dbPath, insertScriptPath, binaryDataDir]
         
         stdout: StdioCollector {
@@ -72,10 +72,10 @@ QtObject {
         
         onExited: function(code) {
             // Watcher should keep running, restart if it exits (unless suspending)
-            if (root._initialized && !SuspendManager.isSuspending) {
+            if (root.active && root._initialized && !SuspendManager.isSuspending) {
                 console.warn("ClipboardService: watcher exited with code:", code, "- restarting...");
                 Qt.callLater(function() {
-                    if (root._initialized && !SuspendManager.isSuspending) {
+                    if (root.active && root._initialized && !SuspendManager.isSuspending) {
                         clipboardWatcher.running = true;
                     }
                 });
@@ -579,16 +579,20 @@ QtObject {
             "  ELSE display_index + 1\n" +
             "END WHERE pinned = (SELECT pinned FROM clipboard_items WHERE id = " + id + ");\n" +
             "-- Compact indices to remove gaps for both pinned and unpinned\n" +
-            "WITH reindexed_pinned AS (\n" +
+            "UPDATE clipboard_items \n" +
+            "SET display_index = reindexed_pinned.new_idx \n" +
+            "FROM (\n" +
             "  SELECT id, ROW_NUMBER() OVER (ORDER BY display_index ASC, updated_at DESC, id DESC) - 1 AS new_idx\n" +
             "  FROM clipboard_items WHERE pinned = 1\n" +
-            ")\n" +
-            "UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed_pinned WHERE reindexed_pinned.id = clipboard_items.id) WHERE pinned = 1;\n" +
-            "WITH reindexed_unpinned AS (\n" +
+            ") AS reindexed_pinned \n" +
+            "WHERE clipboard_items.id = reindexed_pinned.id AND clipboard_items.pinned = 1;\n" +
+            "UPDATE clipboard_items \n" +
+            "SET display_index = reindexed_unpinned.new_idx \n" +
+            "FROM (\n" +
             "  SELECT id, ROW_NUMBER() OVER (ORDER BY display_index ASC, updated_at DESC, id DESC) - 1 AS new_idx\n" +
             "  FROM clipboard_items WHERE pinned = 0\n" +
-            ")\n" +
-            "UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed_unpinned WHERE reindexed_unpinned.id = clipboard_items.id) WHERE pinned = 0;\n" +
+            ") AS reindexed_unpinned \n" +
+            "WHERE clipboard_items.id = reindexed_unpinned.id AND clipboard_items.pinned = 0;\n" +
             "COMMIT;\n" +
             "EOSQL"
         ];
@@ -679,11 +683,13 @@ QtObject {
             "-- Set new index for target item\n" +
             "UPDATE clipboard_items SET display_index = " + newIndex + " WHERE id = " + itemId + ";\n" +
             "-- Compact indices to remove gaps\n" +
-            "WITH reindexed AS (\n" +
+            "UPDATE clipboard_items \n" +
+            "SET display_index = reindexed.new_idx \n" +
+            "FROM (\n" +
             "  SELECT id, ROW_NUMBER() OVER (ORDER BY display_index ASC, updated_at DESC, id DESC) - 1 AS new_idx\n" +
             "  FROM clipboard_items WHERE pinned = " + isPinned + "\n" +
-            ")\n" +
-            "UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed WHERE reindexed.id = clipboard_items.id) WHERE pinned = " + isPinned + ";\n" +
+            ") AS reindexed \n" +
+            "WHERE clipboard_items.id = reindexed.id AND clipboard_items.pinned = " + isPinned + ";\n" +
             "COMMIT;\n" +
             "EOSQL"
         ];
@@ -764,16 +770,20 @@ QtObject {
             ".timeout 5000\n" +
             "BEGIN TRANSACTION;\n" +
             "-- Reindex to ensure unique indices\n" +
-            "WITH reindexed_pinned AS (\n" +
+            "UPDATE clipboard_items \n" +
+            "SET display_index = reindexed_pinned.new_idx \n" +
+            "FROM (\n" +
             "  SELECT id, ROW_NUMBER() OVER (ORDER BY display_index ASC, updated_at DESC, id DESC) - 1 AS new_idx\n" +
             "  FROM clipboard_items WHERE pinned = 1\n" +
-            ")\n" +
-            "UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed_pinned WHERE reindexed_pinned.id = clipboard_items.id) WHERE pinned = 1;\n" +
-            "WITH reindexed_unpinned AS (\n" +
+            ") AS reindexed_pinned \n" +
+            "WHERE clipboard_items.id = reindexed_pinned.id AND clipboard_items.pinned = 1;\n" +
+            "UPDATE clipboard_items \n" +
+            "SET display_index = reindexed_unpinned.new_idx \n" +
+            "FROM (\n" +
             "  SELECT id, ROW_NUMBER() OVER (ORDER BY display_index ASC, updated_at DESC, id DESC) - 1 AS new_idx\n" +
             "  FROM clipboard_items WHERE pinned = 0\n" +
-            ")\n" +
-            "UPDATE clipboard_items SET display_index = (SELECT new_idx FROM reindexed_unpinned WHERE reindexed_unpinned.id = clipboard_items.id) WHERE pinned = 0;\n" +
+            ") AS reindexed_unpinned \n" +
+            "WHERE clipboard_items.id = reindexed_unpinned.id AND clipboard_items.pinned = 0;\n" +
             "-- Create temp variables for the swap\n" +
             "CREATE TEMP TABLE IF NOT EXISTS swap_temp (idx1 INTEGER, idx2 INTEGER);\n" +
             "DELETE FROM swap_temp;\n" +

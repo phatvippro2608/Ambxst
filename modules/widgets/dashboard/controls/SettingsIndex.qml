@@ -375,6 +375,14 @@ QtObject {
         "icon": Icons.lock,
         "isIcon": true
     }, {
+        "label": "Display Selector Keybind",
+        "keywords": "display monitor clone duplicate extend projection shortcut super p",
+        "section": 6,
+        "subSection": "",
+        "subLabel": "Binds > Ambxst",
+        "icon": Icons.compositor,
+        "isIcon": true
+    }, {
         "label": "Tools Keybind",
         "keywords": "utilities tools shortcut",
         "section": 6,
@@ -1157,6 +1165,14 @@ QtObject {
         "subSection": "",
         "subLabel": "",
         "icon": Icons.printer,
+        "isIcon": true
+    }, {
+        "label": "Calendar Sync",
+        "keywords": "calendar google oauth events sync schedule lặp đồng bộ",
+        "section": 11,
+        "subSection": "",
+        "subLabel": "",
+        "icon": Icons.calendar,
         "isIcon": true
     }]
     property var items: staticItems.concat(dynamicItems)

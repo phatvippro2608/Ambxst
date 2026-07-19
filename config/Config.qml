@@ -1511,6 +1511,11 @@ Singleton {
                     property string key: "B"
                     property var action: ({ "id": "ambxst.quit", "args": {} })
                 }
+                property JsonObject display: JsonObject {
+                    property list<string> modifiers: ["SUPER"]
+                    property string key: "P"
+                    property var action: ({ "id": "ambxst.displaySelect", "args": {} })
+                }
             }
             }
             // Default getters
@@ -1535,7 +1540,8 @@ Singleton {
                     "screenrecord": { "modifiers": ["SUPER", "SHIFT"], "key": "R", "action": { "id": "ambxst.screenrecord", "args": {} } },
                     "lens": { "modifiers": ["SUPER", "SHIFT"], "key": "A", "action": { "id": "ambxst.lens", "args": {} } },
                     "reload": { "modifiers": ["SUPER", "ALT"], "key": "B", "action": { "id": "ambxst.reload", "args": {} } },
-                    "quit": { "modifiers": ["SUPER", "CTRL", "ALT"], "key": "B", "action": { "id": "ambxst.quit", "args": {} } }
+                    "quit": { "modifiers": ["SUPER", "CTRL", "ALT"], "key": "B", "action": { "id": "ambxst.quit", "args": {} } },
+                    "display": { "modifiers": ["SUPER"], "key": "P", "action": { "id": "ambxst.displaySelect", "args": {} } }
                 }
             }
 

@@ -319,9 +319,9 @@ Item {
 
     function createTmuxSession(sessionName) {
         if (sessionName) {
-            createProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux new -s "${sessionName}" < /dev/null > /dev/null 2>&1 &`];
+            createProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux new -s "${sessionName}" \\; set-option status off < /dev/null > /dev/null 2>&1 &`];
         } else {
-            createProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux < /dev/null > /dev/null 2>&1 &`];
+            createProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux new \\; set-option status off < /dev/null > /dev/null 2>&1 &`];
         }
         createProcess.running = true;
         // Cerrar el dashboard
@@ -329,7 +329,7 @@ Item {
     }
 
     function attachToSession(sessionName) {
-        attachProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux attach-session -t "${sessionName}" < /dev/null > /dev/null 2>&1 &`];
+        attachProcess.command = ["bash", "-c", `cd "$HOME" && setsid kitty -e tmux attach-session -t "${sessionName}" \\; set-option status off < /dev/null > /dev/null 2>&1 &`];
         attachProcess.running = true;
     }
 

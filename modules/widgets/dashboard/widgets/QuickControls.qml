@@ -56,6 +56,9 @@ StyledRect {
                     Layout.preferredWidth: 48
                     Layout.preferredHeight: 48
                     iconName: {
+                        if (NetworkService.ethernet)
+                            return Icons.ethernet;
+
                         if (!NetworkService.wifiEnabled)
                             return Icons.wifiOff;
 
@@ -74,8 +77,13 @@ StyledRect {
 
                         return Icons.wifiHigh;
                     }
-                    isActive: NetworkService.wifiEnabled || root.expandedPanel === 0
-                    tooltipText: NetworkService.wifiEnabled ? "Wi-Fi: On" : "Wi-Fi: Off"
+                    isActive: NetworkService.ethernet || NetworkService.wifiEnabled || root.expandedPanel === 0
+                    tooltipText: {
+                        if (NetworkService.ethernet) {
+                            return "Ethernet: Connected\nWi-Fi: " + (NetworkService.wifiEnabled ? "On" : "Off");
+                        }
+                        return NetworkService.wifiEnabled ? "Wi-Fi: On" : "Wi-Fi: Off";
+                    }
                     onClicked: NetworkService.toggleWifi()
                     onRightClicked: root.togglePanel(0)
                     onLongPressed: root.togglePanel(0)

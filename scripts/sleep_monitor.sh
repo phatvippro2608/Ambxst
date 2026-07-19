@@ -47,7 +47,7 @@ dbus-monitor --system "type='signal',interface='org.freedesktop.login1.Manager',
 			echo "WAKE"
 			CMD=$(get_cmd "after")
 			if [ -n "$CMD" ]; then
-				eval "$CMD" &
+				(sleep 2 && eval "$CMD") &
 			fi
 		fi
 	done

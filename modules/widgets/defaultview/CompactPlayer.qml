@@ -143,6 +143,7 @@ Item {
             opacity: (compactPlayer.notchHovered && compactPlayer.player) ? 0.0 : 1.0
             horizontalAlignment: Text.AlignHCenter
             z: 5
+            scrollingEnabled: false // Disabled for better performance
 
             Behavior on opacity {
                 enabled: Config.animDuration > 0
@@ -178,6 +179,7 @@ Item {
                 blur: 0.75
                 autoPaddingEnabled: false
                 opacity: (hasArtwork || wallpaperPath !== "") ? 1.0 : 0.0
+                visible: opacity > 0
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
@@ -253,6 +255,7 @@ Item {
                         blurMax: 32
                         blur: 0.75
                         opacity: (hasArtwork || wallpaperPath !== "") ? 1.0 : 0.0 // Simplificado
+                        visible: opacity > 0
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
                             NumberAnimation {

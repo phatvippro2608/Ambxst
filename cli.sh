@@ -306,6 +306,10 @@ screen)
 	fi
 	;;
 suspend)
+	# Lock session first, then suspend
+	loginctl lock-session 2>/dev/null || true
+	sleep 0.5
+
 	if command -v systemctl &>/dev/null; then
 		systemctl suspend
 	elif command -v loginctl &>/dev/null; then

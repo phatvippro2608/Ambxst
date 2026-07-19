@@ -14,6 +14,8 @@ QtObject {
     readonly property string appId: "ambxst"
     readonly property string ipcPipe: "/tmp/ambxst_ipc.pipe"
 
+    signal cycleDisplaySelectRequested()
+
     // High-performance Pipe Listener (Daemon mode)
     property Process pipeListener: Process {
         command: ["bash", "-c", "rm -f " + root.ipcPipe + "; mkfifo " + root.ipcPipe + "; tail -f " + root.ipcPipe]
@@ -62,6 +64,13 @@ QtObject {
                 GlobalStates.screenshotToolVisible = true;
                 break;
             case "lockscreen": GlobalStates.lockscreenVisible = true; break;
+            case "displayselect":
+                if (Visibilities.currentActiveModule === "displaySelect") {
+                    root.cycleDisplaySelectRequested();
+                } else {
+                    Visibilities.setActiveModule("displaySelect");
+                }
+                break;
             
             // Media
             case "media-seek-backward": seekActivePlayer(-mediaSeekStepMs); break;

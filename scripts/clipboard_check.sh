@@ -8,6 +8,14 @@ DB_PATH="$1"
 SCRIPT_PATH="$2"
 DATA_DIR="$3"
 
+# Add a small delay for WPS Office to prevent XWayland clipboard race conditions/freezes
+if command -v hyprctl &>/dev/null; then
+	ACTIVE_CLASS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.class' 2>/dev/null || hyprctl activewindow 2>/dev/null | grep 'class:' | awk '{print $2}' || echo "")
+	if [[ "$ACTIVE_CLASS" =~ ^(wps|wpp|et|pdf|wpspdf)$ ]]; then
+		exit 0
+	fi
+fi
+
 # Check for files first (text/uri-list)
 if FILE_CONTENT=$(wl-paste --type text/uri-list 2>/dev/null); then
 	HASH=$(echo -n "$FILE_CONTENT" | tr -d '\r' | md5sum | cut -d' ' -f1)

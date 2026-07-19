@@ -1,0 +1,43 @@
+File trắng tinh nghĩa là hệ thống của bạn không sử dụng GRUB làm Bootloader. Trên Arch Linux, GRUB không phải là mặc định mà do người dùng tự chọn lúc cài đặt. Hiện nay xu hướng dùng systemd-boot hoặc EFISTUB (chạy trực tiếp không cần bootloader trung gian) phổ biến hơn vì nó gọn nhẹ.
+
+Bạn đoán đúng hướng rồi đó, khả năng cao là cấu hình nằm trong cmdline hoặc các file cấu hình của systemd-boot.
+
+Hãy kiểm tra theo các trường hợp sau để tìm đúng chỗ sửa:
+
+Trường hợp 1: Bạn đang dùng systemd-boot (Rất phổ biến)
+Kiểm tra nhanh bằng lệnh:
+
+Bash
+bootctl status
+Nếu nó báo systemd-boot is installed, hệ thống của bạn quản lý boot bằng systemd.
+
+Nếu dùng file cấu hình Entry truyền thống:
+Cấu hình sẽ nằm trong thư mục /boot/loader/entries/ hoặc /efi/loader/entries/. Bạn liệt kê thử:
+
+Bash
+ls /boot/loader/entries/
+Thường sẽ có một file tên là arch.conf hoặc linux.conf. Mở file đó lên bằng nano:
+
+Bash
+sudo nano /boot/loader/entries/arch.conf
+Tìm dòng bắt đầu bằng options và thêm mem_sleep_default=deep vào cuối dòng đó.
+
+Nếu dùng Unified Kernel Image (UKI):
+Nếu bạn cấu hình Arch theo kiểu UKI (gộp chung kernel, initramfs và cmdline thành một file .efi duy nhất), thì tham số kernel đúng là nằm trong /etc/kernel/cmdline như bạn nghĩ.
+
+Bash
+sudo nano /etc/kernel/cmdline
+Nếu file này có chữ, bạn chỉ cần cách ra một khoảng trắng ở cuối và thêm mem_sleep_default=deep. Sau đó, bạn bắt buộc phải tạo lại file efi bằng lệnh:
+
+Bash
+sudo mkinitcpio -P
+Trường hợp 2: File /etc/kernel/cmdline cũng trắng tinh?
+Nếu cả hai chỗ trên đều không có, hãy ngó thử xem trong thư mục /boot hoặc /efi của bạn đang có những gì bằng lệnh:
+
+Bash
+ls /boot
+# hoặc
+ls /efi
+Nếu bạn thấy có thư mục EFI/refind, nghĩa là bạn đang dùng rEFInd. Lúc này file cấu hình cần sửa sẽ là /boot/EFI/refind/refind.conf.
+
+Bạn check thử bootctl status hoặc xem trong /boot/loader/entries/ có file nào không nhé.

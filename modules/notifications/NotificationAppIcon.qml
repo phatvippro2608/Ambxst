@@ -49,7 +49,7 @@ Item {
                 }
                 font.family: Icons.font
                 font.pixelSize: root.size * 0.5
-                color: root.urgency == NotificationUrgency.Critical ? Colors.criticalText : Styling.srItem("overprimary")
+                color: root.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.primary
 
                 SequentialAnimation on opacity {
                     running: root.urgency == NotificationUrgency.Critical

@@ -29,8 +29,11 @@ NotchAnimationBehavior {
     readonly property int tabWidth: 48
     readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // unified launcher tab is wider
 
+    // Dynamic height based on calendar details panel visibility (Tab 0 only)
+    readonly property real calendarDetailsHeight: (widgetsTabLoader.item && root.state.currentTab === 0) ? widgetsTabLoader.item.detailsHeight : 0
+
     implicitWidth: nonAnimWidth
-    implicitHeight: 550
+    implicitHeight: 400 + calendarDetailsHeight
 
     // Track which tabs have been loaded (for lazy loading)
     property var loadedTabs: ({0: true}) // Tab 0 (widgets) loaded by default
@@ -429,6 +432,7 @@ NotchAnimationBehavior {
 
                 // Tab 0: Unified Launcher
                 TabLoader {
+                    id: widgetsTabLoader
                     property int index: 0
                     sourceComponent: unifiedLauncherComponent
                     z: visible ? 1 : 0

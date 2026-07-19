@@ -44,6 +44,17 @@ Singleton {
         if (iconExists(iconName)) {
             return iconName;
         }
+
+        // Try substitutions
+        if (substitutions[iconName]) {
+            if (Array.isArray(substitutions[iconName])) {
+                for (let i = 0; i < substitutions[iconName].length; i++) {
+                    if (iconExists(substitutions[iconName][i])) return substitutions[iconName][i];
+                }
+            } else if (iconExists(substitutions[iconName])) {
+                return substitutions[iconName];
+            }
+        }
         
         return "image-missing";
     }
@@ -106,8 +117,15 @@ Singleton {
         const desktopIcon = getIconFromDesktopEntry(str);
         if (desktopIcon && iconExists(desktopIcon)) return desktopIcon;
 
-        if (substitutions[str])
-            return substitutions[str];
+        if (substitutions[str]) {
+            if (Array.isArray(substitutions[str])) {
+                for (let i = 0; i < substitutions[str].length; i++) {
+                    if (iconExists(substitutions[str][i])) return substitutions[str][i];
+                }
+            } else if (iconExists(substitutions[str])) {
+                return substitutions[str];
+            }
+        }
 
         for (let i = 0; i < regexSubstitutions.length; i++) {
             const substitution = regexSubstitutions[i];
@@ -145,8 +163,16 @@ Singleton {
         "Code": "visual-studio-code",
         "gnome-tweaks": "org.gnome.tweaks",
         "pavucontrol-qt": "pavucontrol",
-        "wps": "wps-office2019-kprometheus",
-        "wpsoffice": "wps-office2019-kprometheus",
+        "wps": ["wps-office2019-wpsmain", "wps-office-wpsmain", "wps-office2019-kprometheus", "wps-office-wps", "wps-office"],
+        "wpsoffice": ["wps-office2019-wpsmain", "wps-office-wpsmain", "wps-office2019-kprometheus", "wps-office-wps", "wps-office"],
+        "wps-office-wps": ["wps-office2019-wpsmain", "wps-office-wpsmain", "wps-office2019-kprometheus", "wps-office-wps", "wps-office"],
+        "wps-office-prometheus": ["wps-office2019-kprometheus", "wps-office2019-wpsmain", "wps-office-wpsmain", "wps-office-wps"],
+        "et": ["wps-office2019-etmain", "wps-office-etmain", "wps-office-et"],
+        "wps-office-et": ["wps-office2019-etmain", "wps-office-etmain", "wps-office-et"],
+        "wpp": ["wps-office2019-wppmain", "wps-office-wppmain", "wps-office-wpp"],
+        "wps-office-wpp": ["wps-office2019-wppmain", "wps-office-wppmain", "wps-office-wpp"],
+        "wpspdf": ["wps-office2019-pdfmain", "wps-office-pdfmain", "wps-office-pdf"],
+        "wps-office-pdf": ["wps-office2019-pdfmain", "wps-office-pdfmain", "wps-office-pdf"],
         "footclient": "foot",
         "zen": "zen-browser",
         "antigravity-ide": "utilities-terminal",
@@ -263,7 +289,24 @@ Singleton {
                 iconToUse = iconCache[iconToUse];
             } else {
                 let validated = validateIcon(iconToUse);
-                iconCache[iconToUse] = validated;
+                if (validated === "image-missing") {
+                    let guessed = guessIcon(app.id);
+                    if (iconExists(guessed)) {
+                        validated = guessed;
+                    } else if (app.command && app.command.length > 0) {
+                        let guessedCmd = guessIcon(app.command[0]);
+                        if (iconExists(guessedCmd)) {
+                            validated = guessedCmd;
+                        } else {
+                            let guessedName = guessIcon(app.name);
+                            if (iconExists(guessedName)) validated = guessedName;
+                        }
+                    } else {
+                        let guessedName = guessIcon(app.name);
+                        if (iconExists(guessedName)) validated = guessedName;
+                    }
+                }
+                iconCache[app.icon || "application-x-executable"] = validated;
                 iconToUse = validated;
             }
 
@@ -363,7 +406,24 @@ Singleton {
                     iconToUse = iconCache[iconToUse];
                 } else {
                     let validated = validateIcon(iconToUse);
-                    iconCache[iconToUse] = validated;
+                    if (validated === "image-missing") {
+                        let guessed = guessIcon(app.id);
+                        if (iconExists(guessed)) {
+                            validated = guessed;
+                        } else if (app.command && app.command.length > 0) {
+                            let guessedCmd = guessIcon(app.command[0]);
+                            if (iconExists(guessedCmd)) {
+                                validated = guessedCmd;
+                            } else {
+                                let guessedName = guessIcon(app.name);
+                                if (iconExists(guessedName)) validated = guessedName;
+                            }
+                        } else {
+                            let guessedName = guessIcon(app.name);
+                            if (iconExists(guessedName)) validated = guessedName;
+                        }
+                    }
+                    iconCache[app.icon || "application-x-executable"] = validated;
                     iconToUse = validated;
                 }
                 

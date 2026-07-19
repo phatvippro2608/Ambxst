@@ -12,6 +12,8 @@ Rectangle {
     property bool bold: false
     property bool isCurrentDayOfWeek: false
     property string lunarText: ""
+    property bool hasEvent: false
+    property bool isSelected: false
 
     property bool transitionsEnabled: true
 
@@ -61,11 +63,21 @@ Rectangle {
         }
     }
 
+    // Selected background highlight
+    StyledRect {
+        id: selectedBg
+        anchors.fill: parent
+        variant: "focus"
+        radius: parent.radius
+        visible: isSelected && isToday !== 1
+        enableBorder: true
+    }
+
     // Single Centered Text (default layout when lunar calendar is off or header button)
     Text {
         id: singleText
         anchors.fill: parent
-        visible: !(Config.theme.enableLunarCalendar && lunarText !== "")
+        visible: !(Config.theme && Config.theme.enableLunarCalendar && lunarText !== "")
         text: day
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
@@ -75,6 +87,8 @@ Rectangle {
         color: {
             if (isToday === 1)
                 return Styling.srItem("primary");
+            if (isSelected)
+                return Colors.primary;
             if (bold) {
                 return isCurrentDayOfWeek ? Colors.overBackground : Colors.outline;
             }
@@ -96,7 +110,7 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: 2
         spacing: 0
-        visible: Config.theme.enableLunarCalendar && lunarText !== ""
+        visible: Config.theme && Config.theme.enableLunarCalendar && lunarText !== ""
 
         Text {
             text: day
@@ -110,6 +124,8 @@ Rectangle {
             color: {
                 if (isToday === 1)
                     return Styling.srItem("primary");
+                if (isSelected)
+                    return Colors.primary;
                 if (isToday === 0 || clickArea.containsMouse)
                     return Colors.overSurface;
                 return Colors.surfaceBright;
@@ -136,6 +152,20 @@ Rectangle {
             }
             opacity: 0.8
         }
+    }
+
+    // Event dot indicator (top-right corner to avoid overlap with lunar date)
+    Rectangle {
+        id: eventDot
+        width: 4
+        height: 4
+        radius: 2
+        color: isToday === 1 ? Styling.srItem("primary") : Colors.primary
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 3
+        anchors.rightMargin: 3
+        visible: !bold && hasEvent
     }
 
     MouseArea {

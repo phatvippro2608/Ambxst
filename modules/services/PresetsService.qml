@@ -22,7 +22,7 @@ Singleton {
     readonly property string activePresetFile: presetsDir + "/active_preset"
 
     // Files to exclude from presets (never saved, loaded, or shown)
-    readonly property var excludedFiles: ["system.json", "ai.json", "prefix.json", "weather.json"]
+    readonly property var excludedFiles: ["system.json", "ai.json", "prefix.json", "weather.json", "workspaces.json"]
 
     // Signal when presets change
     signal presetsUpdated()
@@ -159,7 +159,7 @@ Singleton {
         // Find all JSON files in subdirectories of presetsDir (depth 2) and assetsPresetsDir
         // Exclude info.json and all excludedFiles from the file list
         // Then, read info.json files content using grep
-        command: ["sh", "-c", "find '" + presetsDir + "' '" + assetsPresetsDir + "' -mindepth 2 -maxdepth 2 -name '*.json' -not -name 'info.json' -not -name 'system.json' -not -name 'ai.json' -not -name 'prefix.json' -not -name 'weather.json'; echo '---METADATA---'; find '" + presetsDir + "' '" + assetsPresetsDir + "' -mindepth 2 -maxdepth 2 -name 'info.json' -exec grep -H . {} +"]
+        command: ["sh", "-c", "find '" + presetsDir + "' '" + assetsPresetsDir + "' -mindepth 2 -maxdepth 2 -name '*.json' -not -name 'info.json' -not -name 'system.json' -not -name 'ai.json' -not -name 'prefix.json' -not -name 'weather.json' -not -name 'workspaces.json'; echo '---METADATA---'; find '" + presetsDir + "' '" + assetsPresetsDir + "' -mindepth 2 -maxdepth 2 -name 'info.json' -exec grep -H . {} +"]
         running: false
 
         stdout: StdioCollector {

@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.services
 
 StyledRect {
     id: weatherContainer
@@ -150,14 +151,18 @@ StyledRect {
     }
 
     function updateWeather() {
-        if (!LocationService.active || !Config.system.location.allowWeatherApp) {
-            weatherContainer.weatherVisible = false;
+        if (!Config.weather) {
             return;
         }
-        LocationService.reportAccess("Weather Widget");
 
-        var location = Config.weather.location.trim();
+        var location = (Config.weather.location || "").trim();
         if (location.length === 0) {
+            if (!LocationService.active || !Config.system.location.allowWeatherApp) {
+                weatherContainer.weatherVisible = false;
+                return;
+            }
+            LocationService.reportAccess("Weather Widget");
+
             geoipProcess.command = ["curl", "-s", "https://ipapi.co/json/"];
             geoipProcess.running = true;
             return;

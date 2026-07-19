@@ -19,7 +19,8 @@ Item {
     clip: true
     implicitHeight: textLabel.implicitHeight
 
-    readonly property bool needsScrolling: textLabel.implicitWidth > width
+    property bool scrollingEnabled: true
+    readonly property bool needsScrolling: scrollingEnabled && textLabel.implicitWidth > width
 
     onTextChanged: resetAndRestart()
     onWidthChanged: resetAndRestart()
@@ -70,7 +71,7 @@ Item {
             height: parent.height
             verticalAlignment: root.verticalAlignment
             horizontalAlignment: root.needsScrolling ? Text.AlignLeft : root.horizontalAlignment
-            elide: Text.ElideNone
+            elide: root.needsScrolling ? Text.ElideNone : Text.ElideRight
             width: root.needsScrolling ? implicitWidth : root.width
         }
 

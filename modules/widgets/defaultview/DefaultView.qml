@@ -209,25 +209,5 @@ Item {
 
     }
 
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0
-
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.2
-        }
-
-    }
-
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
-
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutQuart
-        }
-
-    }
 
 }

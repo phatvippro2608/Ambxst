@@ -108,7 +108,7 @@ Item {
                             font.family: Config.defaultFont
                             font.pixelSize: Config.theme.fontSize
                             font.weight: Font.Bold
-                            color: titleRect.item
+                            color: titleRect.itemColor
                             horizontalAlignment: Text.AlignHCenter
                         }
                     }

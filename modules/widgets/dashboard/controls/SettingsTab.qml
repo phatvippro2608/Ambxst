@@ -210,6 +210,12 @@ Rectangle {
             label: "Printers",
             section: 10,
             isIcon: true
+        },
+        {
+            icon: Icons.calendar,
+            label: "Calendar",
+            section: 11,
+            isIcon: true
         }
     ]
 
@@ -560,6 +566,10 @@ Rectangle {
                 {
                     component: "PrinterPanel.qml",
                     section: 10
+                },
+                {
+                    component: "CalendarPanel.qml",
+                    section: 11
                 }
             ]
 

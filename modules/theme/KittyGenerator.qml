@@ -11,19 +11,21 @@ QtObject {
             return;
         const fmt = c => c.toString();
 
-        const cursor = fmt(Colors.overSurface);
-        const cursorText = fmt(Colors.overSurfaceVariant);
+        const isLight = Config.theme.lightMode;
 
-        const foreground = fmt(Colors.overSurface);
-        const background = fmt(Colors.background);
-        const selectionForeground = fmt(Colors.overSecondary);
-        const selectionBackground = fmt(Colors.secondaryFixedDim);
+        const cursor = fmt(isLight ? Colors.inverseOnSurface : Colors.overSurface);
+        const cursorText = fmt(isLight ? Colors.inverseSurface : Colors.overSurfaceVariant);
+
+        const foreground = fmt(isLight ? Colors.inverseOnSurface : Colors.overSurface);
+        const background = fmt(isLight ? Colors.inverseSurface : Colors.background);
+        const selectionForeground = fmt(isLight ? Colors.inverseSurface : Colors.overSecondary);
+        const selectionBackground = fmt(isLight ? Colors.inverseOnSurface : Colors.secondaryFixedDim);
         const urlColor = fmt(Colors.primary);
-        const backgroundOpacity = Config.theme.srBg.opacity;
+        const backgroundOpacity = 0.85;
 
         // black
-        const color0 = fmt(Colors.surfaceContainerLow);
-        const color8 = fmt(Colors.surfaceBright);
+        const color0 = fmt(isLight ? Colors.overSurface : Colors.surfaceContainerLow);
+        const color8 = fmt(isLight ? Colors.outline : Colors.surfaceBright);
 
         // red
         const color1 = fmt(Colors.red);
@@ -51,8 +53,8 @@ QtObject {
         const color14 = fmt(Colors.lightCyan);
 
         // white
-        const color7 = fmt(Colors.outline);
-        const color15 = fmt(Colors.overSurface);
+        const color7 = fmt(isLight ? Colors.inverseOnSurface : Colors.outline);
+        const color15 = fmt(isLight ? Colors.background : Colors.overSurface);
 
         let conf = "";
         conf += `cursor ${cursor}\n`;

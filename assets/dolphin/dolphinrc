@@ -1,0 +1,25 @@
+MenuBar=Disabled
+
+[CompactMode]
+PreviewSize=96
+
+[DetailsMode]
+ExpandableFolders=false
+PreviewSize=112
+
+[General]
+Version=202
+ViewPropsTimestamp=2026,6,7,18,24,5.631
+
+[IconsMode]
+PreviewSize=224
+
+[KFileDialog Settings]
+Places Icons Auto-resize=false
+Places Icons Static Size=22
+
+[MainWindow]
+MenuBar=Disabled
+
+[PreviewSettings]
+Plugins=directorythumbnail,ffmpegthumbs,fontthumbnail,imagethumbnail,jpegthumbnail,pdfthumbnail,svgthumbnail
