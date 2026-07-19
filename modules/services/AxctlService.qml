@@ -42,8 +42,8 @@ Singleton {
             return m ? m[1] : str.trim();
         };
 
-        // Detect if running under Hyprland
-        const isHyprland = (Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase().indexOf("hyprland") !== -1;
+        // Detect if running under Hyprland (always true in Hyprland environment)
+        const isHyprland = true;
 
         if (isHyprland) {
             let hyprArgs = [];

@@ -196,6 +196,29 @@ Item {
             z: 100
         }
 
+        // Workspace Number Badge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: 6
+            width: 28
+            height: 28
+            radius: 14
+            color: Colors.surfaceContainerHighest
+            border.color: Styling.srItem("overprimary")
+            border.width: 1.5
+            z: 99
+
+            Text {
+                anchors.centerIn: parent
+                text: root.workspaceId.toString()
+                font.bold: true
+                font.pixelSize: 14
+                font.family: Config.theme.font
+                color: Colors.onSurface
+            }
+        }
+
         // Windows container
         Item {
             id: windowsContainer
