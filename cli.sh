@@ -639,6 +639,30 @@ goodbye)
 help | --help | -h)
 	show_help
 	;;
+run)
+	MODULE="${2:-overview}"
+	if [ -w /tmp/ambxst_ipc.pipe ]; then
+		echo "$MODULE" > /tmp/ambxst_ipc.pipe
+	else
+		qs ipc call ambxst run "$MODULE" 2>/dev/null || true
+	fi
+	;;
+ipc)
+	MODULE="${2:-overview}"
+	if [ -w /tmp/ambxst_ipc.pipe ]; then
+		echo "$MODULE" > /tmp/ambxst_ipc.pipe
+	else
+		qs ipc call ambxst run "$MODULE" 2>/dev/null || true
+	fi
+	;;
+overview | dashboard | launcher | wallpapers | assistant | tools | clipboard | notes | tmux | powermenu | screenshot | screenrecord)
+	MODULE="$1"
+	if [ -w /tmp/ambxst_ipc.pipe ]; then
+		echo "$MODULE" > /tmp/ambxst_ipc.pipe
+	else
+		qs ipc call ambxst run "$MODULE" 2>/dev/null || true
+	fi
+	;;
 "")
 	# Run daemon priority script (backgrounded to not block startup)
 	bash "${SCRIPT_DIR}/scripts/daemon_priority.sh" &
