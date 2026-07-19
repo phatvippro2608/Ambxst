@@ -30,12 +30,22 @@ Item {
     property int baseSize: 36
     property int workspaceButtonSize: baseSize - widgetPadding * 2
     property int workspaceButtonWidth: workspaceButtonSize
+    property int buttonSpacing: 6
     property real workspaceIconSize: Math.round(workspaceButtonWidth * 0.6)
     property real workspaceIconSizeShrinked: Math.round(workspaceButtonWidth * 0.5)
     property real workspaceIconOpacityShrinked: 1
     property real workspaceIconMarginShrinked: -4
     property int workspaceIndexInGroup: Config.workspaces.dynamic ? dynamicWorkspaceIds.indexOf((monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) || 1) : ((monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) - 1 || 0) % Config.workspaces.shown
     property var occupiedRanges: []
+
+    function getAppIconSource(win) {
+        if (!win) return "";
+        const entry = DesktopEntries.heuristicLookup(win.class);
+        if (entry && entry.icon) {
+            return Quickshell.iconPath(entry.icon, "image-missing");
+        }
+        return Quickshell.iconPath(AppSearch.getCachedIcon(win.class), "image-missing");
+    }
 
     function updateWorkspaceOccupied() {
         if (Config.workspaces.dynamic) {
@@ -147,8 +157,8 @@ Item {
         updateTimer.restart();
     }
 
-    implicitWidth: orientation === "vertical" ? baseSize : workspaceButtonSize * effectiveWorkspaceCount + widgetPadding * 2
-    implicitHeight: orientation === "vertical" ? workspaceButtonSize * effectiveWorkspaceCount + widgetPadding * 2 : baseSize
+    implicitWidth: orientation === "vertical" ? baseSize : (workspaceButtonSize + buttonSpacing) * effectiveWorkspaceCount - buttonSpacing + widgetPadding * 2
+    implicitHeight: orientation === "vertical" ? (workspaceButtonSize + buttonSpacing) * effectiveWorkspaceCount - buttonSpacing + widgetPadding * 2 : baseSize
 
     readonly property bool effectiveContainBar: Config.bar.containBar && ((Config.bar.frameEnabled !== undefined ? Config.bar.frameEnabled : false))
 
@@ -200,14 +210,14 @@ Item {
                 required property int index
                 required property var modelData
                 z: 1
-                width: (modelData.end - modelData.start + 1) * workspaceButtonWidth
+                width: (modelData.end - modelData.start + 1) * workspaceButtonWidth + (modelData.end - modelData.start) * workspacesWidget.buttonSpacing
                 height: workspaceButtonWidth
 
                 radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
 
                 opacity: Config.theme.srFocus.opacity
 
-                x: modelData.start * workspaceButtonWidth
+                x: modelData.start * (workspaceButtonWidth + workspacesWidget.buttonSpacing)
                 y: 0
 
                 Behavior on opacity {
@@ -252,14 +262,14 @@ Item {
                 required property var modelData
                 z: 1
                 width: workspaceButtonWidth
-                height: (modelData.end - modelData.start + 1) * workspaceButtonWidth
+                height: (modelData.end - modelData.start + 1) * workspaceButtonWidth + (modelData.end - modelData.start) * workspacesWidget.buttonSpacing
 
                 radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
 
                 opacity: Config.theme.srFocus.opacity
 
                 x: 0
-                y: modelData.start * workspaceButtonWidth
+                y: modelData.start * (workspaceButtonWidth + workspacesWidget.buttonSpacing)
 
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
@@ -297,7 +307,7 @@ Item {
         property real idx1: workspaceIndexInGroup
         property real idx2: workspaceIndexInGroup
 
-        implicitWidth: Math.abs(idx1 - idx2) * workspaceButtonWidth + workspaceButtonWidth - activeWorkspaceMargin * 2
+        implicitWidth: Math.abs(idx1 - idx2) * (workspaceButtonWidth + workspacesWidget.buttonSpacing) + workspaceButtonWidth - activeWorkspaceMargin * 2
         implicitHeight: workspaceButtonWidth - activeWorkspaceMargin * 2
         width: implicitWidth
         height: implicitHeight
@@ -312,7 +322,7 @@ Item {
 
         anchors.verticalCenter: parent.verticalCenter
 
-        x: Math.min(idx1, idx2) * workspaceButtonWidth + activeWorkspaceMargin + widgetPadding
+        x: Math.min(idx1, idx2) * (workspaceButtonWidth + workspacesWidget.buttonSpacing) + activeWorkspaceMargin + widgetPadding
         y: parent.height / 2 - implicitHeight / 2
 
         Behavior on activeWorkspaceMargin {
@@ -356,7 +366,7 @@ Item {
         property real idx2: workspaceIndexInGroup
 
         implicitWidth: workspaceButtonWidth - activeWorkspaceMargin * 2
-        implicitHeight: Math.abs(idx1 - idx2) * workspaceButtonWidth + workspaceButtonWidth - activeWorkspaceMargin * 2
+        implicitHeight: Math.abs(idx1 - idx2) * (workspaceButtonWidth + workspacesWidget.buttonSpacing) + workspaceButtonWidth - activeWorkspaceMargin * 2
         width: implicitWidth
         height: implicitHeight
 
@@ -371,7 +381,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
 
         x: parent.width / 2 - implicitWidth / 2
-        y: Math.min(idx1, idx2) * workspaceButtonWidth + activeWorkspaceMargin + widgetPadding
+        y: Math.min(idx1, idx2) * (workspaceButtonWidth + workspacesWidget.buttonSpacing) + activeWorkspaceMargin + widgetPadding
 
         Behavior on activeWorkspaceMargin {
 
@@ -407,7 +417,7 @@ Item {
         visible: orientation === "horizontal"
         z: 3
 
-        spacing: 0
+        spacing: workspacesWidget.buttonSpacing
         anchors.fill: parent
         anchors.margins: widgetPadding
         implicitHeight: workspaceButtonWidth
@@ -437,12 +447,29 @@ Item {
                             return winFocus < bestFocus ? win : best;
                         }, null);
                     }
-                    readonly property var focusedDesktopEntry: focusedWindow ? DesktopEntries.heuristicLookup(focusedWindow.class) : null
-                    property var mainAppIconSource: {
-                        if (focusedDesktopEntry && focusedDesktopEntry.icon) {
-                            return Quickshell.iconPath(focusedDesktopEntry.icon, "image-missing");
+                    property var sortedWindows: {
+                        const wins = CompositorData.workspaceWindowsMap[button.workspaceValue] || [];
+                        return wins.slice().sort((a, b) => {
+                            const aFocus = a.focusHistoryID !== undefined ? a.focusHistoryID : Infinity;
+                            const bFocus = b.focusHistoryID !== undefined ? b.focusHistoryID : Infinity;
+                            return aFocus - bFocus;
+                        });
+                    }
+                    property var stackModel: {
+                        const wins = sortedWindows;
+                        const modelList = [];
+                        if (wins.length === 0) return modelList;
+                        if (wins.length <= 3) {
+                            for (let i = 0; i < wins.length; i++) {
+                                modelList.push({ type: "icon", win: wins[i] });
+                            }
+                        } else {
+                            for (let i = 0; i < 3; i++) {
+                                modelList.push({ type: "icon", win: wins[i] });
+                            }
+                            modelList.push({ type: "badge", count: wins.length - 3 });
                         }
-                        return Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow ? focusedWindow.class : undefined), "image-missing");
+                        return modelList;
                     }
 
                     Text {
@@ -484,54 +511,70 @@ Item {
                         }
                     }
                     Item {
-                        anchors.centerIn: parent
-                        width: workspaceButtonWidth
-                        height: workspaceButtonWidth
+                        id: appIconContainer
+                        anchors.fill: parent
                         opacity: !Config.workspaces.showAppIcons ? 0 : (workspaceButtonBackground.focusedWindow && !Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? 1 : workspaceButtonBackground.focusedWindow ? workspaceIconOpacityShrinked : 0
                         visible: opacity > 0
-                        IconImage {
-                            id: mainAppIcon
-                            anchors.bottom: parent.bottom
-                            anchors.right: parent.right
-                            anchors.bottomMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? Math.round((workspaceButtonWidth - workspaceIconSize) / 2) : workspaceIconMarginShrinked
-                            anchors.rightMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? Math.round((workspaceButtonWidth - workspaceIconSize) / 2) : workspaceIconMarginShrinked
 
-                            source: workspaceButtonBackground.mainAppIconSource
-                            implicitSize: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                        Row {
+                            id: stackRow
+                            spacing: -Math.round(itemSize * 0.35)
 
-                            Behavior on opacity {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on anchors.bottomMargin {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on anchors.rightMargin {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on implicitSize {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                        }
+                            readonly property bool isCentered: !Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons
+                            readonly property int itemSize: isCentered ? workspaceIconSize : workspaceIconSizeShrinked
 
-                        Tinted {
-                            sourceItem: mainAppIcon
-                            anchors.fill: mainAppIcon
+                            anchors.centerIn: isCentered ? parent : undefined
+                            anchors.bottom: isCentered ? undefined : parent.bottom
+                            anchors.right: isCentered ? undefined : parent.right
+                            anchors.bottomMargin: isCentered ? 0 : workspaceIconMarginShrinked
+                            anchors.rightMargin: isCentered ? 0 : workspaceIconMarginShrinked
+
+                            Repeater {
+                                model: workspaceButtonBackground.stackModel
+
+                                delegate: Item {
+                                    id: stackDelegate
+                                    required property var modelData
+                                    required property int index
+
+                                    z: index
+                                    width: stackRow.itemSize
+                                    height: stackRow.itemSize
+
+                                    Rectangle {
+                                        width: stackRow.itemSize
+                                        height: stackRow.itemSize
+                                        radius: width / 2
+                                        color: modelData.type === "badge" ? (Colors.primary || "#ffb3ae") : (Colors.surfaceContainerLow || "#231919")
+                                        border.color: Colors.background || "#1a1111"
+                                        border.width: 1
+
+                                        IconImage {
+                                            id: appIcon
+                                            visible: modelData.type === "icon"
+                                            anchors.centerIn: parent
+                                            source: modelData.type === "icon" ? workspacesWidget.getAppIconSource(modelData.win) : ""
+                                            implicitSize: Math.round(parent.width * 0.7)
+                                        }
+
+                                        Tinted {
+                                            visible: modelData.type === "icon"
+                                            sourceItem: appIcon
+                                            anchors.fill: appIcon
+                                        }
+
+                                        Text {
+                                            visible: modelData.type === "badge"
+                                            anchors.centerIn: parent
+                                            text: modelData.type === "badge" ? "+" + modelData.count : ""
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Math.round(parent.width * 0.5)
+                                            font.bold: true
+                                            color: Colors.overPrimary || "#571d1c"
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -544,7 +587,7 @@ Item {
         visible: orientation === "vertical"
         z: 3
 
-        spacing: 0
+        spacing: workspacesWidget.buttonSpacing
         anchors.fill: parent
         anchors.margins: widgetPadding
         implicitWidth: workspaceButtonWidth
@@ -574,12 +617,29 @@ Item {
                             return winFocus < bestFocus ? win : best;
                         }, null);
                     }
-                    readonly property var focusedDesktopEntry: focusedWindow ? DesktopEntries.heuristicLookup(focusedWindow.class) : null
-                    property var mainAppIconSource: {
-                        if (focusedDesktopEntry && focusedDesktopEntry.icon) {
-                            return Quickshell.iconPath(focusedDesktopEntry.icon, "image-missing");
+                    property var sortedWindows: {
+                        const wins = CompositorData.workspaceWindowsMap[buttonVert.workspaceValue] || [];
+                        return wins.slice().sort((a, b) => {
+                            const aFocus = a.focusHistoryID !== undefined ? a.focusHistoryID : Infinity;
+                            const bFocus = b.focusHistoryID !== undefined ? b.focusHistoryID : Infinity;
+                            return aFocus - bFocus;
+                        });
+                    }
+                    property var stackModel: {
+                        const wins = sortedWindows;
+                        const modelList = [];
+                        if (wins.length === 0) return modelList;
+                        if (wins.length <= 3) {
+                            for (let i = 0; i < wins.length; i++) {
+                                modelList.push({ type: "icon", win: wins[i] });
+                            }
+                        } else {
+                            for (let i = 0; i < 3; i++) {
+                                modelList.push({ type: "icon", win: wins[i] });
+                            }
+                            modelList.push({ type: "badge", count: wins.length - 3 });
                         }
-                        return Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow ? focusedWindow.class : undefined), "image-missing");
+                        return modelList;
                     }
 
                     Text {
@@ -621,54 +681,70 @@ Item {
                         }
                     }
                     Item {
-                        anchors.centerIn: parent
-                        width: workspaceButtonWidth
-                        height: workspaceButtonWidth
+                        id: appIconContainerVert
+                        anchors.fill: parent
                         opacity: !Config.workspaces.showAppIcons ? 0 : (workspaceButtonBackgroundVert.focusedWindow && !Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? 1 : workspaceButtonBackgroundVert.focusedWindow ? workspaceIconOpacityShrinked : 0
                         visible: opacity > 0
-                        IconImage {
-                            id: mainAppIconVert
-                            anchors.bottom: parent.bottom
-                            anchors.right: parent.right
-                            anchors.bottomMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? Math.round((workspaceButtonWidth - workspaceIconSize) / 2) : workspaceIconMarginShrinked
-                            anchors.rightMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? Math.round((workspaceButtonWidth - workspaceIconSize) / 2) : workspaceIconMarginShrinked
 
-                            source: workspaceButtonBackgroundVert.mainAppIconSource
-                            implicitSize: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                        Row {
+                            id: stackRowVert
+                            spacing: -Math.round(itemSize * 0.35)
 
-                            Behavior on opacity {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on anchors.bottomMargin {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on anchors.rightMargin {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on implicitSize {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                        }
+                            readonly property bool isCentered: !Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons
+                            readonly property int itemSize: isCentered ? workspaceIconSize : workspaceIconSizeShrinked
 
-                        Tinted {
-                            sourceItem: mainAppIconVert
-                            anchors.fill: mainAppIconVert
+                            anchors.centerIn: isCentered ? parent : undefined
+                            anchors.bottom: isCentered ? undefined : parent.bottom
+                            anchors.right: isCentered ? undefined : parent.right
+                            anchors.bottomMargin: isCentered ? 0 : workspaceIconMarginShrinked
+                            anchors.rightMargin: isCentered ? 0 : workspaceIconMarginShrinked
+
+                            Repeater {
+                                model: workspaceButtonBackgroundVert.stackModel
+
+                                delegate: Item {
+                                    id: stackDelegateVert
+                                    required property var modelData
+                                    required property int index
+
+                                    z: index
+                                    width: stackRowVert.itemSize
+                                    height: stackRowVert.itemSize
+
+                                     Rectangle {
+                                        width: stackRowVert.itemSize
+                                        height: stackRowVert.itemSize
+                                        radius: width / 2
+                                        color: modelData.type === "badge" ? (Colors.primary || "#ffb3ae") : (Colors.surfaceContainerLow || "#231919")
+                                        border.color: Colors.background || "#1a1111"
+                                        border.width: 1
+
+                                        IconImage {
+                                            id: appIconVert
+                                            visible: modelData.type === "icon"
+                                            anchors.centerIn: parent
+                                            source: modelData.type === "icon" ? workspacesWidget.getAppIconSource(modelData.win) : ""
+                                            implicitSize: Math.round(parent.width * 0.7)
+                                        }
+
+                                        Tinted {
+                                            visible: modelData.type === "icon"
+                                            sourceItem: appIconVert
+                                            anchors.fill: appIconVert
+                                        }
+
+                                        Text {
+                                            visible: modelData.type === "badge"
+                                            anchors.centerIn: parent
+                                            text: modelData.type === "badge" ? "+" + modelData.count : ""
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Math.round(parent.width * 0.5)
+                                            font.bold: true
+                                            color: Colors.overPrimary || "#571d1c"
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
