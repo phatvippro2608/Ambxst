@@ -76,3 +76,56 @@ Cấu hình máy in hệ thống được tích hợp trực tiếp vào script 
   ./scripts/sync_dolphin_config.sh restore
   ```
 
+---
+
+## 6. Hướng dẫn Cài mới & Cập nhật Ambxst từ Upstream
+
+### 6.1. Hướng dẫn cài đặt trên máy mới tinh (Clean Install)
+Để cài đặt Ambxst đã tích hợp toàn bộ các thay đổi tùy biến cá nhân của bạn trên một máy mới, hãy chạy các lệnh sau theo thứ tự:
+
+1. **Clone trực tiếp Fork của bạn**:
+   ```bash
+   git clone https://github.com/phatvippro2608/ambxst.git ~/.local/src/ambxst
+   ```
+2. **Cài đặt Dependencies & Hyprland**:
+   ```bash
+   cd ~/.local/src/ambxst
+   ./install.sh
+   ambxst install hyprland
+   ```
+3. **Khôi phục cấu hình Dolphin & Máy in**:
+   ```bash
+   ./scripts/sync_dolphin_config.sh restore
+   ```
+4. **Khởi động shell**:
+   ```bash
+   ambxst & disown
+   ```
+
+### 6.2. Hướng dẫn cập nhật tính năng mới từ tác giả gốc (Upstream Update)
+Khi tác giả gốc (`Axenide/Ambxst`) ra bản vá lỗi hoặc tính năng mới, hãy chạy các lệnh sau tại thư mục nguồn để kéo code mới về và gộp (merge) mà không làm mất các thay đổi tùy biến cá nhân:
+
+1. **Thêm remote upstream (chỉ cần làm một lần duy nhất)**:
+   ```bash
+   cd ~/.local/src/ambxst
+   git remote add upstream https://github.com/Axenide/Ambxst.git || true
+   ```
+2. **Lấy code mới nhất từ Upstream**:
+   ```bash
+   git fetch upstream
+   ```
+3. **Trộn code mới vào nhánh chính của bạn**:
+   ```bash
+   git merge upstream/main
+   ```
+4. **Xử lý xung đột (nếu có)**:
+   Nếu Git báo xung đột (Merge Conflict), hãy mở thư mục dự án trong trình soạn thảo (VS Code), chọn giữ cấu hình cũ hoặc mới đối với những dòng bị đỏ, sau đó đánh dấu đã giải quyết và commit:
+   ```bash
+   git add <tên_file_xung_đột>
+   git commit -m "merge: resolve conflicts with upstream"
+   ```
+5. **Nạp lại giao diện**:
+   ```bash
+   ambxst reload
+   ```
+
