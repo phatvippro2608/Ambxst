@@ -48,6 +48,7 @@ Singleton {
             onRead: data => {
                 const signal = data.trim();
                 if (signal === "SUSPEND") {
+                    root.lockBeforeSleep();
                     SuspendManager.onPrepareForSleep();
                 } else if (signal === "WAKE") {
                     SuspendManager.onWakingUp();
@@ -182,6 +183,19 @@ Singleton {
             `, root, "dynamicProc");
         } catch (e) {
             console.error("Failed to create process for command:", cmd, e);
+        }
+    }
+
+    function shouldUseInternalSleepLock() {
+        const cmd = (root.beforeSleepCmd || "").trim();
+        return cmd === "loginctl lock-session"
+            || cmd === "loginctl lock-sessions"
+            || cmd === "ambxst lock";
+    }
+
+    function lockBeforeSleep() {
+        if (root.shouldUseInternalSleepLock()) {
+            LockscreenService.lock();
         }
     }
 

@@ -172,14 +172,12 @@ Item {
         id: persistentDashboardViewLoader
 
         active: false
-
         sourceComponent: Component {
             DashboardView {
                 visible: false
+                screenName: root.screen.name
             }
-
         }
-
     }
 
     // Persistent power menu view
