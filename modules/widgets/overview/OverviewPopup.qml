@@ -45,6 +45,45 @@ PanelWindow {
         active: overviewOpen
     }
 
+    Keys.onPressed: event => {
+        if (!overviewOpen) return;
+
+        // Check if user is actively searching with letter/text query
+        const hasTextQuery = searchInput && searchInput.text.trim() !== "" && /[a-zA-Z]/.test(searchInput.text);
+        if (hasTextQuery) {
+            if (event.key === Qt.Key_Escape) {
+                event.accepted = true;
+                Visibilities.setActiveModule("");
+            }
+            return;
+        }
+
+        // Number keys 1..9 -> Workspaces 1..9, 0 -> Workspace 10
+        let targetWs = -1;
+        if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+            targetWs = event.key - Qt.Key_1 + 1;
+        } else if (event.key >= Qt.Key_KP_1 && event.key <= Qt.Key_KP_9) {
+            targetWs = event.key - Qt.Key_KP_1 + 1;
+        } else if (event.key === Qt.Key_0 || event.key === Qt.Key_KP_0) {
+            targetWs = 10;
+        }
+
+        if (targetWs !== -1) {
+            event.accepted = true;
+            if (searchInput) searchInput.text = "";
+            Visibilities.setActiveModule("", true);
+            Qt.callLater(() => {
+                AxctlService.dispatch(`workspace ${targetWs}`);
+            });
+            return;
+        }
+
+        if (event.key === Qt.Key_Escape) {
+            event.accepted = true;
+            Visibilities.setActiveModule("");
+        }
+    }
+
     // Semi-transparent backdrop
     Rectangle {
         id: backdrop
@@ -140,6 +179,13 @@ PanelWindow {
                     placeholderText: qsTr("Search windows...")
                     handleTabNavigation: true
                     clearOnEscape: false
+                    interceptNumbers: true
+
+                    onNumberPressed: number => {
+                        text = "";
+                        AxctlService.dispatch(`workspace ${number}`);
+                        Visibilities.setActiveModule("");
+                    }
 
                     // Match counter suffix
                     Text {

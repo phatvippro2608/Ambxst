@@ -16,8 +16,9 @@ StyledRect {
     property bool clearOnEscape: true
     property bool handleTabNavigation: false  // Si true, captura Tab y emite señales. Si false, usa navegación normal.
     property bool passwordMode: false  // Si true, muestra círculos en lugar del texto
-    property bool centerText: false  // Si true, centra el texto horizontalmente
-    property bool disableCursorNavigation: false  // Si true, Left/Right siempre emiten señales sin mover el cursor
+    property bool disableCursorNavigation: false
+    property bool interceptNumbers: false
+    signal numberPressed(int number)
 
     signal searchTextChanged(string text)
     signal accepted
@@ -93,8 +94,32 @@ StyledRect {
             background: null
             echoMode: root.passwordMode ? TextInput.Password : TextInput.Normal
             horizontalAlignment: root.centerText ? TextInput.AlignHCenter : TextInput.AlignLeft
+            function checkAndInterceptNumber(inputText) {
+                if (!root.interceptNumbers) return false;
+                if (!inputText || inputText.length === 0) return false;
+                if (/[a-zA-Z]/.test(inputText)) return false;
+
+                let trimmed = inputText.trim();
+                if (/^[0-9]+$/.test(trimmed)) {
+                    let num = parseInt(trimmed, 10);
+                    if (num >= 0 && num <= 9) {
+                        let ws = (num === 0) ? 10 : num;
+                        Qt.callLater(() => {
+                            textField.clear();
+                            root.numberPressed(ws);
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            onTextEdited: {
+                if (checkAndInterceptNumber(text)) return;
+            }
 
             onTextChanged: {
+                if (checkAndInterceptNumber(text)) return;
                 root.searchTextChanged(text);
             }
 
@@ -103,6 +128,22 @@ StyledRect {
             }
 
             Keys.onPressed: event => {
+                if (root.interceptNumbers && /[a-zA-Z]/.test(textField.text) === false) {
+                    let targetWs = -1;
+                    if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+                        targetWs = event.key - Qt.Key_1 + 1;
+                    } else if (event.key >= Qt.Key_KP_1 && event.key <= Qt.Key_KP_9) {
+                        targetWs = event.key - Qt.Key_KP_1 + 1;
+                    } else if (event.key === Qt.Key_0 || event.key === Qt.Key_KP_0) {
+                        targetWs = 10;
+                    }
+                    if (targetWs !== -1) {
+                        event.accepted = true;
+                        root.numberPressed(targetWs);
+                        return;
+                    }
+                }
+
                 if (event.key === Qt.Key_Backspace && textField.text.length === 0) {
                     root.backspaceOnEmpty();
                     event.accepted = true;
