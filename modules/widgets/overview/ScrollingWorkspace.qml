@@ -711,7 +711,6 @@ Item {
 
                                     root.draggingFromWorkspace = -1;
                                     root.draggingTargetWorkspace = -1;
-                                }
                             } else if (mouse.button === Qt.RightButton) {
                                 root.isScrollDragging = false;
                             }
