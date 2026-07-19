@@ -4,32 +4,37 @@ Tài liệu này lưu trữ thông tin về các cấu hình tuỳ chỉnh giao 
 
 ---
 
-## 1. Đồng bộ & Khôi phục Giao diện Dolphin & GTK
-Toàn bộ cấu hình giao diện của **Dolphin** (trình quản lý file Qt6), **Kvantum** (engine vẽ theme), **Qt6ct** và **GTK File Picker** (cửa sổ chọn file hệ thống) được quản lý tự động qua script:
-📂 Đường dẫn lưu cấu hình: `assets/dolphin/`
-📜 Script quản lý: `scripts/sync_dolphin_config.sh`
+## 1. Đồng bộ & Khôi phục Toàn bộ Cấu hình Người dùng (User Environment Sync)
+Toàn bộ cấu hình hệ thống bao gồm **Ambxst Shell**, **Hyprland** (`hyprland.conf`), **Dolphin** (trình quản lý file Qt6), **Kvantum**, **Qt6ct**, **GTK File Picker**, **Bộ gõ Fcitx5**, **Terminal Kitty**, **Script ảnh nền Bing**, và **Máy in CUPS** được quản lý tự động qua script:
+📂 Đường dẫn lưu cấu hình: `assets/user_config/`
+📜 Script quản lý chính: `scripts/sync_user_config.sh` (hoặc `scripts/sync_dolphin_config.sh`)
 
 ### Các lệnh sử dụng:
-* **Sao lưu (Backup)**: Chạy lệnh này để lưu các thiết lập hiện tại từ máy của bạn vào thư mục Git:
+* **Sao lưu (Backup)**: Chạy lệnh này để lưu toàn bộ các thiết lập hiện tại từ máy của bạn vào thư mục Git:
   ```bash
-  ./scripts/sync_dolphin_config.sh backup
+  ./scripts/sync_user_config.sh backup
   ```
-* **Khôi phục & Cài đặt máy mới (Restore)**: Tự động tải tất cả các thư viện liên quan, driver máy in, các gói hiển thị ảnh thu nhỏ (thumbnails), cập nhật bộ nhớ đệm hệ thống và sao chép cấu hình về đúng vị trí:
+* **Khôi phục & Cài đặt máy mới (Restore)**: Tự động cài các gói phần mềm cần thiết, driver máy in, ảnh thu nhỏ, khôi phục cấu hình cá nhân và nạp lại hệ thống:
   ```bash
-  ./scripts/sync_dolphin_config.sh restore
+  ./scripts/sync_user_config.sh restore
   ```
 
 ---
 
-## 2. Danh sách các gói phần mềm được khôi phục tự động
-Khi chạy lệnh `restore`, script sẽ cài đặt các gói sau:
+## 2. Danh sách các gói phần mềm & Cấu hình được khôi phục tự động
+Khi chạy lệnh `restore`, script sẽ cài đặt và khôi phục toàn bộ các phần sau:
 1. **Giao diện & Icon**: `qt6ct`, `kvantum`, `kvantum-qt5`, `papirus-icon-theme`.
-2. **Ảnh thu nhỏ (Thumbnails)**: `ffmpegthumbs` (video), `kdegraphics-thumbnailers` (PDF/graphics), `kimageformats` (các định dạng ảnh WebP/AVIF), `kdesdk-thumbnailers` (code/diffs).
-3. **Tiện ích hệ thống & Máy in (Cups)**:
+2. **Bộ gõ Tiếng Việt & Terminal**: `fcitx5`, `fcitx5-gtk`, `fcitx5-qt`, `fcitx5-unikey`, `kitty` (khôi phục toàn bộ cài đặt phím gõ & theme Terminal).
+3. **Ảnh thu nhỏ (Thumbnails)**: `ffmpegthumbs` (video), `kdegraphics-thumbnailers` (PDF/graphics), `kimageformats` (các định dạng ảnh WebP/AVIF), `kdesdk-thumbnailers` (code/diffs).
+4. **Tiện ích hệ thống & Máy in (Cups)**:
    * Trình quản lý in ấn: `cups`, `cups-filters`, `cups-pdf`, `system-config-printer`.
    * Trình điều khiển (Drivers): `hplip`, `foomatic-db-engine`, `libcups`, `libcupsfilters`, `libppd`.
-4. **Hỗ trợ ứng dụng bên thứ 3**: `kio-fuse` (để ứng dụng ngoài mở được file trong Trash/SFTP của Dolphin).
-5. **Định nghĩa file & Sửa lỗi mất icon WPS Office**: Gói AUR `wps-office-mime-cn`.
+5. **Hỗ trợ ứng dụng bên thứ 3**: `kio-fuse` (để ứng dụng ngoài mở được file trong Trash/SFTP của Dolphin).
+6. **Định nghĩa file & Sửa lỗi mất icon WPS Office**: Gói AUR `wps-office-mime-cn`.
+7. **Toàn bộ cấu hình tinh chỉnh Ambxst**:
+   * Tất cả file cấu hình JSON (`dock.json`, `bar.json`, `theme.json`, `weather.json`, `desktop.json`, `lockscreen.json`, `notch.json`, `overview.json`, `workspaces.json`, `binds.json`).
+   * **Script tự động tải ảnh nền Bing**: `~/.config/hypr/scripts/bing-wallpaper.sh`.
+   * Lịch và Token Google Calendar, Preset đang kích hoạt (`active_preset`).
 
 ---
 
