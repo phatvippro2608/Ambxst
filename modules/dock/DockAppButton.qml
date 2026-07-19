@@ -15,11 +15,66 @@ Button {
     id: root
 
     required property var appToplevel
+    property Item dockContentRef: null
     property int lastFocused: -1
     property real iconSize: Config.dock?.iconSize ?? 40
     property real countDotWidth: 10
     property real countDotHeight: 4
     property string dockPosition: "bottom"
+    hoverEnabled: true
+    readonly property ShellScreen screen: dockContentRef ? dockContentRef.screen : null
+    property bool showPopup: false
+
+    readonly property bool isMouseOverAny: root.hovered || (dockContentRef && dockContentRef.activePopupHovered && dockContentRef.activePopupButton === root)
+
+    onIsMouseOverAnyChanged: {
+        if (isMouseOverAny) {
+            popupCloseTimer.stop();
+            if (root.hovered) {
+                popupDelayTimer.start();
+            }
+        } else {
+            popupDelayTimer.stop();
+            popupCloseTimer.start();
+        }
+    }
+
+    Timer {
+        id: popupDelayTimer
+        interval: 150
+        repeat: false
+        onTriggered: {
+            if (root.hovered) {
+                root.showPopup = true;
+            }
+        }
+    }
+
+    Timer {
+        id: popupCloseTimer
+        interval: 250
+        repeat: false
+        onTriggered: {
+            if (!isMouseOverAny) {
+                root.showPopup = false;
+            }
+        }
+    }
+
+    onShowPopupChanged: {
+        if (dockContentRef) {
+            if (showPopup) {
+                dockContentRef.activePopupToplevel = root.appToplevel;
+                dockContentRef.activePopupPosition = root.dockPosition;
+                dockContentRef.activePopupButton = root;
+                dockContentRef.activePopupActive = true;
+            } else {
+                if (dockContentRef.activePopupButton === root) {
+                    dockContentRef.activePopupActive = false;
+                }
+            }
+        }
+    }
 
     // Position helpers
     readonly property bool isBottom: dockPosition === "bottom"
@@ -214,7 +269,7 @@ Button {
 
     // Tooltip
     StyledToolTip {
-        show: root.hovered && !root.isSeparator
+        show: root.hovered && !root.isSeparator && !(dockContentRef && dockContentRef.activePopupActive)
         tooltipText: root.desktopEntry?.name ?? root.appToplevel?.appId ?? ""
     }
 }

@@ -37,6 +37,7 @@ Item {
     property real workspaceIconMarginShrinked: -4
     property int workspaceIndexInGroup: Config.workspaces.dynamic ? dynamicWorkspaceIds.indexOf((monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) || 1) : ((monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : undefined) - 1 || 0) % Config.workspaces.shown
     property var occupiedRanges: []
+    property var otherActiveWorkspaces: []
 
     function getAppIconSource(win) {
         if (!win) return "";
@@ -75,6 +76,17 @@ Item {
             });
         }
         updateOccupiedRanges();
+
+        const otherList = [];
+        const currentMonitorName = monitor ? monitor.name : "";
+        const allMonitors = CompositorData.monitors || [];
+        for (let i = 0; i < allMonitors.length; i++) {
+            const m = allMonitors[i];
+            if (m && m.name !== currentMonitorName && m.activeWorkspace) {
+                otherList.push(m.activeWorkspace.id);
+            }
+        }
+        otherActiveWorkspaces = otherList;
     }
 
     function updateOccupiedRanges() {
@@ -134,6 +146,13 @@ Item {
 
     Connections {
         target: AxctlService.workspaces
+        function onValuesChanged() {
+            updateTimer.restart();
+        }
+    }
+
+    Connections {
+        target: AxctlService.monitors
         function onValuesChanged() {
             updateTimer.restart();
         }
@@ -472,6 +491,22 @@ Item {
                         return modelList;
                     }
 
+                    readonly property bool isActiveOnOtherMonitor: workspacesWidget.otherActiveWorkspaces.includes(button.workspaceValue)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.width / 2
+                        color: "transparent"
+                        border.color: Colors.primary || "#ffb3ae"
+                        border.width: 1.5
+                        opacity: workspaceButtonBackground.isActiveOnOtherMonitor ? 0.6 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
+                        }
+                    }
+
                     Text {
                         opacity: Config.workspaces.alwaysShowNumbers || ((Config.workspaces.showNumbers && (!Config.workspaces.showAppIcons || !workspaceButtonBackground.focusedWindow || Config.workspaces.alwaysShowNumbers)) || (Config.workspaces.alwaysShowNumbers && !Config.workspaces.showAppIcons)) ? 1 : 0
                         z: 3
@@ -640,6 +675,22 @@ Item {
                             modelList.push({ type: "badge", count: wins.length - 3 });
                         }
                         return modelList;
+                    }
+
+                    readonly property bool isActiveOnOtherMonitor: workspacesWidget.otherActiveWorkspaces.includes(buttonVert.workspaceValue)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.width / 2
+                        color: "transparent"
+                        border.color: Colors.primary || "#ffb3ae"
+                        border.width: 1.5
+                        opacity: workspaceButtonBackgroundVert.isActiveOnOtherMonitor ? 0.6 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
+                        }
                     }
 
                     Text {

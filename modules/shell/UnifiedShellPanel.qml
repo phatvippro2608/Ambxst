@@ -165,6 +165,10 @@ PanelWindow {
                 item: dockContent.visible ? dockContent.dockHitbox : null
             },
             Region {
+                // Include active dock popup/tooltip item in mask so mouse events are not blocked
+                item: (dockContent.visible && globalDockPreviewPopover.active) ? globalDockPreviewPopover : null
+            },
+            Region {
                 item: (assistantSidebar.active || assistantSidebar.hitbox.visible) ? assistantSidebar.hitbox : null
             }
         ]
@@ -235,6 +239,19 @@ PanelWindow {
             screen: unifiedPanel.targetScreen
             z: 3
             visible: unifiedPanel.dockEnabled
+        }
+
+        DockWindowPreviewPopover {
+            id: globalDockPreviewPopover
+            z: 9999
+            appToplevel: dockContent.activePopupToplevel
+            dockPosition: dockContent.activePopupPosition
+            active: dockContent.activePopupActive && (dockContent.activePopupButton ? dockContent.activePopupButton.screen === unifiedPanel.targetScreen : false)
+            targetButton: dockContent.activePopupButton
+
+            onHoveredChanged: {
+                dockContent.activePopupHovered = hovered;
+            }
         }
 
         NotchContent {

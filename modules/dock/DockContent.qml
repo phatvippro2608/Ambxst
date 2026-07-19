@@ -14,10 +14,18 @@ import qs.modules.globals
 import qs.config
 
 Item {
-    id: root
+    id: dockContentRoot
+    readonly property alias root: dockContentRoot
 
     required property ShellScreen screen
     property bool unifiedEffectActive: false
+    property Item activePopupItem: null
+
+    property var activePopupToplevel: null
+    property string activePopupPosition: "bottom"
+    property bool activePopupActive: false
+    property Item activePopupButton: null
+    property bool activePopupHovered: false
     
     // Pass pinned state from parent or config
     readonly property bool keepHidden: Config.dock?.keepHidden ?? false
@@ -101,6 +109,11 @@ Item {
 
     // Reveal logic
     property bool reveal: {
+        // Lock reveal to true if preview popover is active or hovered
+        if (activePopupItem || activePopupActive || activePopupHovered) {
+            return true;
+        }
+
         // Priority: Fullscreen check
         if (activeWindowFullscreen) {
             return (Config.dock?.availableOnFullscreen ?? false) && (Config.dock?.hoverToReveal && dockMouseArea.containsMouse);
@@ -477,6 +490,7 @@ Item {
                         appToplevel: modelData
                         Layout.alignment: Qt.AlignVCenter
                         dockPosition: "bottom"
+                        dockContentRef: dockContentRoot
                     }
                 }
 
@@ -611,6 +625,7 @@ Item {
                         appToplevel: modelData
                         Layout.alignment: Qt.AlignHCenter
                         dockPosition: root.position
+                        dockContentRef: dockContentRoot
                     }
                 }
 
