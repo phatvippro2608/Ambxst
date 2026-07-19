@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Antigravity IDE (Legacy)
+Comment=Bản IDE cũ chạy độc lập
+Exec=/opt/antigravity-legacy/bin/antigravity-ide --class=antigravity-legacy %f
+Icon=/opt/antigravity-legacy/resources/app/resources/linux/code.png
+StartupWMClass=antigravity-legacy
+Terminal=false
+Categories=Development;IDE;

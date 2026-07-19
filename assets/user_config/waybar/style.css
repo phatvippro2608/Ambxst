@@ -1,0 +1,61 @@
+* {
+    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+window#waybar {
+    background-color: rgba(30, 30, 46, 0.7); /* Nền mờ đục */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e2e3;
+}
+
+/* Khoảng cách cho các module */
+#custom-logo,
+#workspaces,
+#clock,
+#tray,
+#pulseaudio,
+#backlight,
+#network,
+#battery,
+#custom-power {
+    padding: 0 12px;
+    margin: 0;
+}
+
+/* Tùy chỉnh Logo trái */
+#custom-logo {
+    font-size: 16px;
+    padding-left: 20px;
+    padding-right: 15px;
+}
+
+/* Tùy chỉnh Workspaces dạng chấm tròn */
+#workspaces button {
+    color: #a6adc8;
+    background: transparent;
+    padding: 0 4px;
+    box-shadow: none;
+    border: none;
+}
+
+#workspaces button.active {
+    color: #ffffff;
+}
+
+#workspaces button:hover {
+    color: #89b4fa;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Các module bên phải gộp thành một khối nhìn gọn gàng */
+.modules-right > widget {
+    border-radius: 0;
+}
+
+#custom-power {
+    color: #f38ba8;
+    padding-right: 20px;
+}

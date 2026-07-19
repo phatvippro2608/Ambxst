@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Clipboard History
+Comment=A modern clipboard manager for Wayland and X11
+Exec=/home/dev/.local/bin/clipboard
+Icon=clipboard
+Terminal=false
+Categories=Utility;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

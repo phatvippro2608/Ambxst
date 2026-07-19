@@ -1,0 +1,32 @@
+{
+  "positionX": "right",
+  "positionY": "top",
+  "control-center-margin-top": 5,
+  "control-center-margin-right": 10,
+  "control-center-width": 320,
+  "widgets": [
+    "volume",
+    "backlight",
+    "buttons-grid"
+  ],
+  "widget-config": {
+    "volume": {
+      "label": " ",
+      "show-per-app": true,
+      "show-per-app-icon": true,
+      "show-per-app-label": true
+    },
+    "backlight": {
+      "label": " "
+    },
+    "buttons-grid": {
+      "actions": [
+        {
+          "label": " Mở bộ trộn âm thanh (Pavucontrol)",
+          "command": "pavucontrol"
+        }
+      ]
+    }
+  }
+}
+

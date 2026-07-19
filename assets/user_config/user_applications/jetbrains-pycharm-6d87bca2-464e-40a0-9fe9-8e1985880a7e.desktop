@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=PyCharm 2026.1.2
+Exec="/home/dev/.local/share/JetBrains/Toolbox/apps/pycharm/bin/pycharm" %u
+Version=1.0
+Type=Application
+Categories=Development;IDE;
+Terminal=false
+Icon=jetbrains-pycharm-6d87bca2-464e-40a0-9fe9-8e1985880a7e
+X-Icon-Path=/home/dev/.local/share/icons/hicolor/scalable/apps/jetbrains-pycharm-6d87bca2-464e-40a0-9fe9-8e1985880a7e.svg
+X-Installed-Icon-Cache-Path=/home/dev/.local/share/icons/hicolor
+X-Icon-Name-Before-Sanitization=jetbrains-pycharm-6d87bca2-464e-40a0-9fe9-8e1985880a7e.desktop.icon.svg
+Comment=The Only Python IDE you need
+StartupWMClass=jetbrains-pycharm
+StartupNotify=true

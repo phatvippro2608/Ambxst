@@ -1,0 +1,74 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 30,
+    "exclusive": true,
+    "spacing": 0,
+    
+    "modules-left": ["custom/logo", "hyprland/workspaces"],
+    "modules-center": ["clock"],
+    "modules-right": ["tray", "pulseaudio", "backlight", "network", "battery", "custom/power"],
+
+    "custom/logo": {
+        "format": "  ",
+        "tooltip": false
+    },
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "active": "",
+            "default": "",
+            "empty": ""
+        },
+        "persistent-workspaces": {
+            "*": 4
+        }
+    },
+
+    "clock": {
+        "format": "{:%a %d %b  %H:%M}",
+        "tooltip": false
+    },
+
+    "pulseaudio": {
+        "format": "{icon}",
+        "format-muted": "",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "on-click": "swaync-client -t -sw",
+        "tooltip": false
+    },
+
+    "backlight": {
+        "format": "{icon}",
+        "format-icons": ["", ""],
+        "on-click": "swaync-client -t -sw",
+        "tooltip": false
+    },
+
+    "network": {
+        "format-wifi": "  {essid}",
+        "format-ethernet": " Wired",
+        "format-disconnected": "⚠ Offline",
+        "tooltip-format": "IP: {ipaddr}\nGateway: {gwaddr}",
+        "on-click": "nm-connection-editor"
+    },
+
+    "battery": {
+        "format": "{icon}  {capacity}%",
+        "format-charging": "  {capacity}%",
+        "format-icons": ["", "", "", "", ""]
+    },
+
+    "tray": {
+        "spacing": 15
+    },
+
+    "custom/power": {
+        "format": "  ",
+        "on-click": "wlogout",
+        "tooltip": false
+    }
+}

@@ -1,0 +1,43 @@
+{
+  "positionX": "right",
+  "positionY": "top",
+  "control-center-margin-top": 2,
+  "control-center-margin-right": 10,
+  "control-center-margin-bottom": 10,
+  "control-center-width": 360,
+  "fit-to-screen": true,
+  "image-visibility": "when-available",
+  "widgets": [
+    "volume",
+    "backlight",
+    "dnd",
+    "notifications",
+    "buttons-grid"
+  ],
+  "widget-config": {
+    "volume": {
+      "label": " ",
+      "show-per-app": true,
+      "show-per-app-icon": true,
+      "show-per-app-label": true
+    },
+    "backlight": {
+      "label": " "
+    },
+    "dnd": {
+      "text": "Tránh làm phiền"
+    },
+    "buttons-grid": {
+      "actions": [
+        {
+          "label": "  Bộ trộn âm thanh",
+          "command": "pavucontrol"
+        },
+        {
+          "label": "  Quản lý Mạng",
+          "command": "nm-connection-editor"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,72 @@
+* {
+    font-family: "JetBrainsMono Nerd Font", sans-serif;
+    font-weight: 600;
+}
+
+/* Khung tổng thể */
+.control-center {
+    background: rgba(30, 30, 46, 0.85); /* Nền mờ đục xịn xò */
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cdd6f4;
+    padding: 12px;
+}
+
+/* Thanh trượt Âm thanh & Độ sáng */
+.widget-volume, .widget-backlight {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 15px;
+    margin: 5px 10px;
+    border-radius: 14px;
+}
+
+scale trough {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-height: 6px;
+}
+scale highlight {
+    background: #89b4fa; /* Xanh chuẩn Mac */
+    border-radius: 10px;
+}
+
+/* Khu vực Thông báo (Notifications) */
+.widget-dnd {
+    margin: 10px 10px 5px 10px;
+    font-size: 14px;
+}
+.widget-dnd > switch {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+.widget-dnd > switch:checked {
+    background: #89b4fa;
+}
+
+.notification-row {
+    outline: none;
+}
+.notification {
+    background: rgba(255, 255, 255, 0.08); /* Nền thông báo sáng hơn chút */
+    border-radius: 14px;
+    margin: 5px 10px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.notification-content {
+    background: transparent;
+    padding: 0;
+}
+.summary {
+    font-size: 14px;
+    color: #89b4fa; /* Màu tiêu đề thông báo */
+}
+.body {
+    font-size: 13px;
+    color: #a6adc8; /* Màu nội dung */
+    margin-top: 4px;
+}
+.image {
+    border-radius: 10px; /* Bo góc ảnh preview */
+    margin-right: 10px;
+}

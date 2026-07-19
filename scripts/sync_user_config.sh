@@ -75,11 +75,13 @@ backup() {
   cp_if_exists "$HOME/.config/Kvantum/kvantum.kvconfig" "$ASSETS_DIR/kvantum.kvconfig"
   cp_if_exists "$HOME/.config/mimeapps.list" "$ASSETS_DIR/mimeapps.list"
   cp_if_exists "$HOME/.config/gtk-3.0/settings.ini" "$ASSETS_DIR/gtk3_settings.ini"
+  cp_if_exists "$HOME/.config/gtk-3.0/gtk.css" "$ASSETS_DIR/gtk3_gtk.css"
   cp_if_exists "$HOME/.config/gtk-4.0/settings.ini" "$ASSETS_DIR/gtk4_settings.ini"
+  cp_if_exists "$HOME/.config/gtk-4.0/gtk.css" "$ASSETS_DIR/gtk4_gtk.css"
   cp_if_exists "$HOME/.config/hypr/hypridle.conf" "$ASSETS_DIR/hypridle.conf"
   cp_if_exists "$HOME/.config/hypr/hyprland.conf" "$ASSETS_DIR/hyprland.conf"
 
-  # Backup complete user configs (ambxst settings, bing wallpaper scripts, fcitx5, kitty)
+  # Backup complete user configs (ambxst settings, bing wallpaper scripts, fcitx5, kitty, swaync, waybar, desktop apps)
   cp_dir_if_exists "$HOME/.config/ambxst" "$ASSETS_DIR/ambxst_config"
   # Remove sensitive OAuth tokens to satisfy GitHub push protection rules
   rm -f "$ASSETS_DIR/ambxst_config/calendar_tokens.json"
@@ -87,6 +89,9 @@ backup() {
   cp_dir_if_exists "$HOME/.config/hypr/scripts" "$ASSETS_DIR/hypr_scripts"
   cp_dir_if_exists "$HOME/.config/fcitx5" "$ASSETS_DIR/fcitx5"
   cp_dir_if_exists "$HOME/.config/kitty" "$ASSETS_DIR/kitty"
+  cp_dir_if_exists "$HOME/.config/swaync" "$ASSETS_DIR/swaync"
+  cp_dir_if_exists "$HOME/.config/waybar" "$ASSETS_DIR/waybar"
+  cp_dir_if_exists "$HOME/.local/share/applications" "$ASSETS_DIR/user_applications"
   
   # Backup CUPS printers config and PPDs (requires sudo)
   log_info "Backing up CUPS printers configurations (requires sudo)..."
@@ -160,7 +165,9 @@ restore() {
   cp_file "$ASSETS_DIR/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
   cp_file "$ASSETS_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
   cp_file "$ASSETS_DIR/gtk3_settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
+  cp_file "$ASSETS_DIR/gtk3_gtk.css" "$HOME/.config/gtk-3.0/gtk.css"
   cp_file "$ASSETS_DIR/gtk4_settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
+  cp_file "$ASSETS_DIR/gtk4_gtk.css" "$HOME/.config/gtk-4.0/gtk.css"
   cp_file "$ASSETS_DIR/hypridle.conf" "$HOME/.config/hypr/hypridle.conf"
   cp_file "$ASSETS_DIR/hyprland.conf" "$HOME/.config/hypr/hyprland.conf"
 
@@ -169,6 +176,9 @@ restore() {
   cp_dir "$ASSETS_DIR/hypr_scripts" "$HOME/.config/hypr/scripts"
   cp_dir "$ASSETS_DIR/fcitx5" "$HOME/.config/fcitx5"
   cp_dir "$ASSETS_DIR/kitty" "$HOME/.config/kitty"
+  cp_dir "$ASSETS_DIR/swaync" "$HOME/.config/swaync"
+  cp_dir "$ASSETS_DIR/waybar" "$HOME/.config/waybar"
+  cp_dir "$ASSETS_DIR/user_applications" "$HOME/.local/share/applications"
   
   # Restore CUPS printers config and PPDs (requires sudo)
   log_info "Restoring CUPS printers configurations (requires sudo)..."
