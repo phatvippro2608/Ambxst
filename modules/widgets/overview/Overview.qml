@@ -229,7 +229,7 @@ Item {
                         color: Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.85)
                         border.color: Styling.srItem("overprimary")
                         border.width: 1
-                        z: 0
+                        z: 2
                         enabled: false
 
                         Text {
