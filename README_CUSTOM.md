@@ -41,20 +41,16 @@ Khi chạy lệnh `restore`, script sẽ cài đặt và khôi phục toàn bộ
 ## 3. Cấu hình Chế độ Ngủ sâu (S3 Deep Sleep) - Chống hao pin
 Mặc định Linux thường chạy chế độ ngủ `s2idle` làm laptop rất nhanh hết pin. Để bật chế độ ngủ sâu `deep` (S3 Suspend to RAM):
 
-* **Kích hoạt tạm thời**:
+* **Kích hoạt tự động 1-Click (Cho máy mới)**:
+  ```bash
+  ./scripts/setup_deep_sleep.sh
+  ```
+  *(Script sẽ tự phát hiện bạn dùng systemd-boot hay GRUB để chèn tham số `mem_sleep_default=deep` tương ứng)*.
+
+* **Kích hoạt thủ công**:
   ```bash
   echo deep | sudo tee /sys/power/mem_sleep
   ```
-* **Kích hoạt vĩnh viễn (Cho máy mới)**:
-  Thêm tham số `mem_sleep_default=deep` vào tệp cấu hình bootloader.
-  * Nếu dùng **systemd-boot** (như máy hiện tại), mở tệp boot entry tương ứng trong `/boot/loader/entries/` và thêm vào cuối dòng `options`:
-    ```text
-    options ... mem_sleep_default=deep
-    ```
-  * Nếu dùng **GRUB**, thêm vào dòng `GRUB_CMDLINE_LINUX_DEFAULT` trong `/etc/default/grub` rồi chạy `sudo update-grub`:
-    ```text
-    GRUB_CMDLINE_LINUX_DEFAULT="... mem_sleep_default=deep"
-    ```
 
 ---
 
