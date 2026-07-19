@@ -264,20 +264,36 @@ Item {
                         }
                     }
 
+                    Timer {
+                        id: hoverSwitchTimer
+                        interval: 750
+                        repeat: false
+                        onTriggered: {
+                            AxctlService.dispatch(`workspace ${workspaceValue}`);
+                        }
+                    }
+
                     DropArea {
                         anchors.fill: parent
-                        onEntered: {
+                        onEntered: drag => {
                             overviewRoot.draggingTargetWorkspace = workspaceValue;
                             parent.isHoveredDrag = true;
+                            hoverSwitchTimer.restart();
                         }
                         onExited: {
+                            hoverSwitchTimer.stop();
                             parent.isHoveredDrag = false;
                             if (overviewRoot.draggingTargetWorkspace == workspaceValue)
                                 overviewRoot.draggingTargetWorkspace = -1;
                         }
                         onDropped: drop => {
+                            hoverSwitchTimer.stop();
                             parent.isHoveredDrag = false;
                             overviewRoot.draggingTargetWorkspace = -1;
+                            Visibilities.setActiveModule("", true);
+                            Qt.callLater(() => {
+                                AxctlService.dispatch(`workspace ${workspaceValue}`);
+                            });
                         }
                     }
                 }

@@ -181,6 +181,42 @@ Item {
     property real pressX: 0
     property real pressY: 0
 
+    Timer {
+        id: dndFocusWindowTimer
+        interval: 750
+        repeat: false
+        onTriggered: {
+            Visibilities.setActiveModule("", true);
+            if (windowData) {
+                if (windowData.workspace && windowData.workspace.id) {
+                    AxctlService.dispatch(`workspace ${windowData.workspace.id}`);
+                }
+                AxctlService.dispatch(`focuswindow address:${windowData.address}`);
+            }
+        }
+    }
+
+    DropArea {
+        anchors.fill: parent
+        z: 1
+        onEntered: drag => {
+            dndFocusWindowTimer.restart();
+        }
+        onExited: {
+            dndFocusWindowTimer.stop();
+        }
+        onDropped: drop => {
+            dndFocusWindowTimer.stop();
+            Visibilities.setActiveModule("", true);
+            if (windowData) {
+                if (windowData.workspace && windowData.workspace.id) {
+                    AxctlService.dispatch(`workspace ${windowData.workspace.id}`);
+                }
+                AxctlService.dispatch(`focuswindow address:${windowData.address}`);
+            }
+        }
+    }
+
     MouseArea {
         id: dragArea
         anchors.fill: parent
