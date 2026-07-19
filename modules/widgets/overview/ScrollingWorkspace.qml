@@ -262,12 +262,14 @@ Item {
                 }
             }
 
-            // Double-click on empty space to switch workspace
+            // Single-click on empty space to switch workspace
             TapHandler {
                 acceptedButtons: Qt.LeftButton
-                onDoubleTapped: {
-                    AxctlService.dispatch(`workspace ${root.workspaceId}`);
+                onTapped: {
                     Visibilities.setActiveModule("", true);
+                    Qt.callLater(() => {
+                        AxctlService.dispatch(`workspace ${root.workspaceId}`);
+                    });
                 }
             }
 
@@ -533,8 +535,17 @@ Item {
 
                         onReleased: mouse => {
                             if (mouse.button === Qt.LeftButton) {
-                                if (windowDelegate.dragging) {
-                                    windowDelegate.dragging = false;
+                                if (!windowDelegate.dragging) {
+                                    Visibilities.setActiveModule("", true);
+                                    const winAddr = windowDelegate.windowData ? windowDelegate.windowData.address : "";
+                                    if (winAddr) {
+                                        Qt.callLater(() => {
+                                            AxctlService.dispatch(`focuswindow address:${winAddr}`);
+                                        });
+                                    }
+                                    return;
+                                }
+                                windowDelegate.dragging = false;
 
                                     // Calculate target workspace from cursor position
                                     let targetWs = root.workspaceId; // Default to current workspace
