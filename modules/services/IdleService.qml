@@ -74,6 +74,63 @@ Singleton {
     property int elapsedIdleTime: 0
     property var triggeredListeners: [] // Keeps track of indices that have fired
 
+    // Calculate dynamic listeners based on battery status and timeout configurations
+    readonly property var dynamicListeners: {
+        let list = [];
+
+        // Check if battery service is available, default to plugged-in if not
+        let isPlugged = Battery.available ? Battery.isPluggedIn : true;
+
+        // Get configured timeouts (in seconds)
+        let screenOff = isPlugged ? (Config.system.idle.screen_off_timeout_ac ?? 600) : (Config.system.idle.screen_off_timeout_battery ?? 180);
+        let suspend = isPlugged ? (Config.system.idle.suspend_timeout_ac ?? 1800) : (Config.system.idle.suspend_timeout_battery ?? 600);
+
+        // 1. Dim display: happens 30 seconds before screen off (min 10s timeout)
+        let dimTimeout = Math.max(10, screenOff - 30);
+        if (screenOff > 0) {
+            list.push({
+                "timeout": dimTimeout,
+                "onTimeout": "ambxst brightness 10 -s",
+                "onResume": "ambxst brightness -r"
+            });
+
+            // 2. Lock screen and turn off display
+            list.push({
+                "timeout": screenOff,
+                "onTimeout": "loginctl lock-session && ambxst screen off",
+                "onResume": "ambxst screen on"
+            });
+        }
+
+        // 3. Suspend system
+        if (suspend > 0) {
+            list.push({
+                "timeout": suspend,
+                "onTimeout": "ambxst suspend",
+                "onResume": ""
+            });
+        }
+
+        // Append any custom listeners from system.json if present
+        if (Config.system.idle.listeners) {
+            for (let i = 0; i < Config.system.idle.listeners.length; i++) {
+                let l = Config.system.idle.listeners[i];
+                let cmd = l.onTimeout || "";
+                // Filter out standard ones to avoid double execution
+                if (!cmd.includes("ambxst suspend") && !cmd.includes("screen off") && !cmd.includes("brightness 10 -s") && !cmd.includes("loginctl lock-session")) {
+                    list.push(l);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    // Reset idle state when dynamicListeners change (e.g. power source changed or settings adjusted)
+    onDynamicListenersChanged: {
+        root.resetIdleState();
+    }
+
     // Master Monitor: Detects "absence of activity" almost immediately
     property var masterMonitor: IdleMonitor {
         id: masterMonitor
@@ -129,7 +186,7 @@ Singleton {
     }
 
     function checkListeners() {
-        let listeners = Config.system.idle.listeners;
+        let listeners = root.dynamicListeners;
         for (let i = 0; i < listeners.length; i++) {
             let listener = listeners[i];
             let tVal = listener.timeout || 60;
@@ -153,7 +210,7 @@ Singleton {
             root.triggeredLockScreenOff = false;
         }
 
-        let listeners = Config.system.idle.listeners;
+        let listeners = root.dynamicListeners;
 
         // Execute resume commands for all triggered listeners
         // We iterate backwards to undo latest states first (optional preference)

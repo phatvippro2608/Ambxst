@@ -52,10 +52,9 @@ StyledRect {
             z: 0
             radius: root.radius
 
-            property Item activeItem: (repeater && repeater.count > 0 && root.currentIndex >= 0 && root.currentIndex < repeater.count) ? repeater.itemAt(root.currentIndex) : null
-            width: activeItem ? activeItem.width : root.buttonSize
+            width: root.options && root.options.length > 0 ? parent.width / root.options.length : 0
             height: parent.height
-            x: activeItem ? activeItem.x : 0
+            x: root.options && root.options.length > 0 ? root.currentIndex * (parent.width / root.options.length) : 0
 
             Behavior on x {
                 enabled: Config.animDuration > 0

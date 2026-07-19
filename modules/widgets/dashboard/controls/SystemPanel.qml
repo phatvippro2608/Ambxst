@@ -21,6 +21,30 @@ Item {
     readonly property real sideMargin: (width - contentWidth) / 2
     property string currentSection: ""
 
+    readonly property var screenOffOptions: [
+        { "label": "Never", "value": 0 },
+        { "label": "1 minute", "value": 60 },
+        { "label": "2 minutes", "value": 120 },
+        { "label": "3 minutes", "value": 180 },
+        { "label": "5 minutes", "value": 300 },
+        { "label": "10 minutes", "value": 600 },
+        { "label": "15 minutes", "value": 900 },
+        { "label": "30 minutes", "value": 1800 },
+        { "label": "1 hour", "value": 3600 },
+        { "label": "2 hours", "value": 7200 }
+    ]
+
+    readonly property var suspendOptions: [
+        { "label": "Never", "value": 0 },
+        { "label": "5 minutes", "value": 300 },
+        { "label": "10 minutes", "value": 600 },
+        { "label": "15 minutes", "value": 900 },
+        { "label": "30 minutes", "value": 1800 },
+        { "label": "1 hour", "value": 3600 },
+        { "label": "2 hours", "value": 7200 },
+        { "label": "5 hours", "value": 18000 }
+    ]
+
     function geocodeAddress(addressText, callback) {
         function reverseGeocode(lat, lon) {
             var xhr = new XMLHttpRequest();
@@ -1017,12 +1041,82 @@ Item {
                         spacing: 8
 
                         Text {
-                            text: "Idle"
+                            text: "Power & Sleep"
                             font.family: Config.theme.font
                             font.pixelSize: Styling.fontSize(-1)
                             font.weight: Font.Medium
                             color: Colors.overSurfaceVariant
-                            Layout.bottomMargin: -4
+                            Layout.bottomMargin: 4
+                        }
+
+                        // Screen Off Settings
+                        Text {
+                            text: "Screen"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            font.weight: Font.Bold
+                            color: Colors.overBackground
+                            Layout.topMargin: 4
+                        }
+
+                        SettingsComboBox {
+                            label: "On battery power, turn off screen after"
+                            options: root.screenOffOptions
+                            value: Config.system.idle.screen_off_timeout_battery !== undefined ? Config.system.idle.screen_off_timeout_battery : 180
+                            onValueSelected: (val) => {
+                                Config.system.idle.screen_off_timeout_battery = val;
+                                GlobalStates.markShellChanged();
+                            }
+                        }
+
+                        SettingsComboBox {
+                            label: "When plugged in, turn off screen after"
+                            options: root.screenOffOptions
+                            value: Config.system.idle.screen_off_timeout_ac !== undefined ? Config.system.idle.screen_off_timeout_ac : 600
+                            onValueSelected: (val) => {
+                                Config.system.idle.screen_off_timeout_ac = val;
+                                GlobalStates.markShellChanged();
+                            }
+                        }
+
+                        // Sleep Settings
+                        Text {
+                            text: "Sleep"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            font.weight: Font.Bold
+                            color: Colors.overBackground
+                            Layout.topMargin: 8
+                        }
+
+                        SettingsComboBox {
+                            label: "On battery power, put device to sleep after"
+                            options: root.suspendOptions
+                            value: Config.system.idle.suspend_timeout_battery !== undefined ? Config.system.idle.suspend_timeout_battery : 600
+                            onValueSelected: (val) => {
+                                Config.system.idle.suspend_timeout_battery = val;
+                                GlobalStates.markShellChanged();
+                            }
+                        }
+
+                        SettingsComboBox {
+                            label: "When plugged in, put device to sleep after"
+                            options: root.suspendOptions
+                            value: Config.system.idle.suspend_timeout_ac !== undefined ? Config.system.idle.suspend_timeout_ac : 1800
+                            onValueSelected: (val) => {
+                                Config.system.idle.suspend_timeout_ac = val;
+                                GlobalStates.markShellChanged();
+                            }
+                        }
+
+                        // Advanced Actions
+                        Text {
+                            text: "Advanced Actions"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(0)
+                            font.weight: Font.Bold
+                            color: Colors.overBackground
+                            Layout.topMargin: 12
                         }
 
                         TextInputRow {
@@ -1061,12 +1155,14 @@ Item {
                             }
                         }
 
+                        // Custom Listeners
                         Text {
-                            text: "Listeners"
+                            text: "Custom Listeners"
                             font.family: Config.theme.font
                             font.pixelSize: Styling.fontSize(0)
+                            font.weight: Font.Bold
                             color: Colors.overBackground
-                            Layout.topMargin: 8
+                            Layout.topMargin: 12
                         }
 
                         Repeater {
@@ -1805,4 +1901,118 @@ Item {
 
     }
 
+    // Inline component for ComboBox settings (similar to NumberInputRow)
+    component SettingsComboBox: RowLayout {
+        id: comboRowRoot
+
+        property string label: ""
+        property var options: []
+        property int value: 0
+
+        signal valueSelected(int newValue)
+
+        Layout.fillWidth: true
+        spacing: 8
+
+        Text {
+            text: comboRowRoot.label
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(0)
+            color: Colors.overBackground
+            Layout.fillWidth: true
+        }
+
+        ComboBox {
+            id: combo
+            Layout.preferredWidth: 150
+            Layout.preferredHeight: 32
+
+            model: comboRowRoot.options.map(opt => opt.label)
+            currentIndex: {
+                for (var i = 0; i < comboRowRoot.options.length; i++) {
+                    if (comboRowRoot.options[i].value === comboRowRoot.value)
+                        return i;
+                }
+                return 0;
+            }
+
+            onActivated: index => {
+                comboRowRoot.valueSelected(comboRowRoot.options[index].value);
+            }
+
+            background: Rectangle {
+                color: combo.hovered ? Colors.surfaceContainerHigh : Colors.surfaceContainer
+                radius: Styling.radius(-2)
+                border.color: Colors.outlineVariant
+                border.width: 1
+            }
+
+            contentItem: Text {
+                text: combo.currentText
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(0)
+                color: Colors.overBackground
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: 10
+            }
+
+            indicator: Text {
+                x: combo.width - width - 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: Icons.caretDown
+                font.family: Icons.font
+                font.pixelSize: 18
+                color: Colors.overBackground
+            }
+
+            popup: Popup {
+                id: comboPopup
+                y: combo.height + 4
+                width: combo.width
+                implicitHeight: popupListView.contentHeight > 200 ? 200 : popupListView.contentHeight
+                padding: 4
+
+                background: Rectangle {
+                    color: Colors.surfaceContainerLow
+                    radius: Styling.radius(-1)
+                    border.color: Colors.outlineVariant
+                    border.width: 1
+                }
+
+                ListView {
+                    id: popupListView
+                    anchors.fill: parent
+                    clip: true
+                    implicitHeight: contentHeight
+                    model: combo.popup.visible ? combo.delegateModel : null
+                    currentIndex: combo.highlightedIndex
+                    ScrollIndicator.vertical: ScrollIndicator {}
+                }
+            }
+
+            delegate: ItemDelegate {
+                id: delegateItem
+                required property var modelData
+                required property int index
+
+                width: ListView.view.width - 8
+                height: 32
+
+                background: Rectangle {
+                    color: delegateItem.highlighted ? Colors.surfaceContainerHigh : "transparent"
+                    radius: Styling.radius(-2)
+                }
+
+                contentItem: Text {
+                    text: delegateItem.modelData
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(0)
+                    color: Colors.overBackground
+                    leftPadding: 10
+                }
+
+                highlighted: combo.highlightedIndex === index
+            }
+        }
+    }
 }

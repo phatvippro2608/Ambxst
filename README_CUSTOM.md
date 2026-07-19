@@ -61,4 +61,18 @@ Mặc định Linux thường chạy chế độ ngủ `s2idle` làm laptop rấ
 windowrule = float 1, match:class ^([Xx]dg-desktop-portal-gtk)$
 windowrule = size 900 650, match:class ^([Xx]dg-desktop-portal-gtk)$
 windowrule = center 1, match:class ^([Xx]dg-desktop-portal-gtk)$
-```
+
+---
+
+## 5. Sao lưu & Khôi phục Cấu hình Máy in (CUPS & PPD Drivers)
+Cấu hình máy in hệ thống được tích hợp trực tiếp vào script đồng bộ chính để bạn không bị mất danh sách máy in đã cài đặt:
+
+* **Tự động sao lưu**: Khi chạy lệnh backup, script sẽ sao lưu danh sách máy in (`printers.conf`) và các driver PPD tương ứng của từng máy in vào thư mục Git:
+  ```bash
+  ./scripts/sync_dolphin_config.sh backup
+  ```
+* **Tự động khôi phục**: Khi chạy lệnh restore trên máy mới, script sẽ tự động chép trả lại cấu hình, phân quyền chuẩn hệ thống (`root:cups`), khôi phục thư mục driver PPD và tự động restart service `cups` để áp dụng cấu hình máy in ngay lập tức:
+  ```bash
+  ./scripts/sync_dolphin_config.sh restore
+  ```
+

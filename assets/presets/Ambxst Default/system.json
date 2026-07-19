@@ -7,6 +7,10 @@
             "before_sleep_cmd": "loginctl lock-session",
             "after_sleep_cmd": "ambxst screen on"
         },
+        "screen_off_timeout_battery": 180,
+        "screen_off_timeout_ac": 600,
+        "suspend_timeout_battery": 600,
+        "suspend_timeout_ac": 1800,
         "listeners": [
             {
                 "timeout": 150,

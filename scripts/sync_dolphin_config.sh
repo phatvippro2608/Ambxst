@@ -61,6 +61,20 @@ backup() {
   cp_if_exists "$HOME/.config/gtk-4.0/settings.ini" "$ASSETS_DIR/gtk4_settings.ini"
   cp_if_exists "$HOME/.config/hypr/hypridle.conf" "$ASSETS_DIR/hypridle.conf"
   
+  # Backup CUPS printers config and PPDs (requires sudo)
+  log_info "Backing up CUPS printers configurations (requires sudo)..."
+  if [[ -f /etc/cups/printers.conf ]]; then
+    sudo cp /etc/cups/printers.conf "$ASSETS_DIR/printers.conf"
+    sudo chown "$USER:$USER" "$ASSETS_DIR/printers.conf"
+    log_success "Backed up printers.conf"
+  fi
+  if [[ -d /etc/cups/ppd ]]; then
+    rm -rf "$ASSETS_DIR/ppd"
+    sudo cp -r /etc/cups/ppd "$ASSETS_DIR/ppd"
+    sudo chown -R "$USER:$USER" "$ASSETS_DIR/ppd"
+    log_success "Backed up PPD driver files"
+  fi
+  
   log_success "Backup completed successfully!"
 }
 
@@ -108,6 +122,24 @@ restore() {
   cp_file "$ASSETS_DIR/gtk4_settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
   cp_file "$ASSETS_DIR/hypridle.conf" "$HOME/.config/hypr/hypridle.conf"
   
+  # Restore CUPS printers config and PPDs (requires sudo)
+  log_info "Restoring CUPS printers configurations (requires sudo)..."
+  if [[ -f "$ASSETS_DIR/printers.conf" ]]; then
+    sudo cp "$ASSETS_DIR/printers.conf" /etc/cups/printers.conf
+    sudo chown root:cups /etc/cups/printers.conf
+    sudo chmod 600 /etc/cups/printers.conf
+    log_success "Restored printers.conf"
+  fi
+  if [[ -d "$ASSETS_DIR/ppd" ]]; then
+    sudo cp -r "$ASSETS_DIR/ppd" /etc/cups/
+    sudo chown -R root:cups /etc/cups/ppd
+    sudo chmod 755 /etc/cups/ppd
+    sudo chmod 644 /etc/cups/ppd/* 2>/dev/null || true
+    log_success "Restored PPD driver files"
+  fi
+  log_info "Restarting CUPS service to apply changes..."
+  sudo systemctl restart cups || sudo systemctl restart org.cups.cupsd || true
+
   log_info "Updating system caches..."
   gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"
   gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"

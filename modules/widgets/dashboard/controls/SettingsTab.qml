@@ -505,7 +505,7 @@ Rectangle {
             clip: true
 
             property int previousSection: 0
-            readonly property int maxContentWidth: 480
+            readonly property int maxContentWidth: Math.min(800, contentArea.width - 48)
 
             // Track section changes for animation direction
             onVisibleChanged: {

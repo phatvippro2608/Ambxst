@@ -1019,6 +1019,10 @@ Singleton {
                     property string before_sleep_cmd: "loginctl lock-session"
                     property string after_sleep_cmd: "ambxst screen on"
                 }
+                property int screen_off_timeout_battery: 180
+                property int screen_off_timeout_ac: 600
+                property int suspend_timeout_battery: 600
+                property int suspend_timeout_ac: 1800
                 property list<var> listeners: [
                     {
                         "timeout": 150,

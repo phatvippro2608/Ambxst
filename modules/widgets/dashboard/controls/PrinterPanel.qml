@@ -12,7 +12,7 @@ import qs.config
 Item {
     id: root
 
-    property int maxContentWidth: 480
+    property int maxContentWidth: 720
     readonly property int contentWidth: Math.min(width, maxContentWidth)
     property string expandedPrinter: ""
     property bool showAddForm: false
@@ -21,21 +21,6 @@ Item {
     property string newProtocol: "socket://"
     property string newDriver: "everywhere"
     property int currentTab: 0
-
-    Component.onCompleted: {
-        console.log("DEBUG: PrinterPanel currentTab onCompleted:", root.currentTab);
-    }
-
-    Timer {
-        interval: 1500
-        running: true
-        repeat: false
-        onTriggered: {
-            console.log("DEBUG: Timer triggered. currentTab was:", root.currentTab);
-            root.currentTab = 0;
-            console.log("DEBUG: Timer triggered. currentTab is now:", root.currentTab);
-        }
-    }
 
     readonly property var panelActions: {
         let list = [];
@@ -76,7 +61,7 @@ Item {
             policy: ScrollBar.AsNeeded
         }
 
-        ColumnLayout {
+        Column {
             id: mainColumn
             width: root.contentWidth
             anchors.horizontalCenter: parent.horizontalCenter
@@ -84,6 +69,7 @@ Item {
 
             // Section 1: Printers Titlebar
             PanelTitlebar {
+                width: parent.width
                 title: "Printers"
                 statusText: !PrinterService.cupsActive ? "CUPS Offline" : ""
                 statusColor: Colors.red
@@ -93,7 +79,7 @@ Item {
             // Tab switch
             SegmentedSwitch {
                 id: tabSwitch
-                Layout.fillWidth: true
+                width: parent.width
                 options: [
                     { label: "Printers", icon: Icons.printer },
                     { label: "Jobs & History", icon: Icons.list }
@@ -104,11 +90,12 @@ Item {
                 }
             }
 
-            // Tab 0: Printers & Options
-            ColumnLayout {
+            // Tab 0: Printers List
+            Column {
+                id: printersColumn
                 visible: root.currentTab === 0
-                Layout.fillWidth: true
-                spacing: 8
+                width: parent.width
+                spacing: 12
 
                 Repeater {
                     model: PrinterService.printers
@@ -118,48 +105,34 @@ Item {
                         required property var modelData
                         required property int index
 
-                        readonly property bool expanded: root.expandedPrinter === modelData.name
-
-                        Layout.fillWidth: true
-                        height: expanded ? (72 + optionsColumn.implicitHeight + 16) : 72
-                        Layout.preferredHeight: height
+                        width: parent.width
+                        height: 96
                         variant: modelData.is_default ? "focus" : "common"
                         enableShadow: false
                         radius: Styling.radius(0)
 
-                        Behavior on height {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.InOutQuad
-                            }
-                        }
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
 
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 8
-
-                            // Main Printer Info Row
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 12
-
-                                Text {
-                                    text: Icons.printer
-                                    font.family: Icons.font
-                                    font.pixelSize: 22
-                                    color: printerCard.item
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                ColumnLayout {
+                                // Row 1: Icon, Name + Badges, and Action Buttons
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 2
-                                    Layout.alignment: Qt.AlignVCenter
+                                    spacing: 12
 
-                                    RowLayout {
-                                        spacing: 8
+                                    Text {
+                                        text: Icons.printer
+                                        font.family: Icons.font
+                                        font.pixelSize: 22
+                                        color: printerCard.item
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+
+                                    ColumnLayout {
+                                        spacing: 4
+                                        Layout.alignment: Qt.AlignVCenter
+
                                         Text {
                                             text: printerCard.modelData.name
                                             font.family: Config.theme.font
@@ -167,7 +140,7 @@ Item {
                                             font.bold: true
                                             color: printerCard.item
                                             elide: Text.ElideRight
-                                            Layout.maximumWidth: 220
+                                            Layout.maximumWidth: 320
                                         }
 
                                         // Default badge
@@ -190,19 +163,136 @@ Item {
                                         }
                                     }
 
-                                    Text {
-                                        text: printerCard.modelData.device || "No device URI"
-                                        font.family: Config.theme.font
-                                        font.pixelSize: Styling.fontSize(-2)
-                                        color: printerCard.item
-                                        opacity: 0.8
-                                        elide: Text.ElideRight
+                                    // Spacer to push action buttons to the right edge
+                                    Item {
                                         Layout.fillWidth: true
+                                    }
+
+                                    RowLayout {
+                                        spacing: 6
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        // Set Default Button
+                                        Button {
+                                            visible: !printerCard.modelData.is_default
+                                            flat: true
+                                            implicitWidth: 32
+                                            implicitHeight: 32
+                                            
+                                            background: StyledRect {
+                                                variant: parent.hovered ? "focus" : "internalbg"
+                                                radius: Styling.radius(-4)
+                                            }
+                                            
+                                            contentItem: Text {
+                                                text: Icons.accept
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                color: Colors.overBackground
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+                                            
+                                            onClicked: PrinterService.setDefaultPrinter(printerCard.modelData.name)
+                                            
+                                            StyledToolTip {
+                                                visible: parent.hovered
+                                                tooltipText: "Set as Default"
+                                            }
+                                        }
+
+                                        // Delete Printer Button
+                                        Button {
+                                            id: deleteButton
+                                            flat: true
+                                            implicitWidth: deleteButton.confirm ? 56 : 32
+                                            implicitHeight: 32
+                                            
+                                            property bool confirm: false
+                                            
+                                            background: StyledRect {
+                                                variant: deleteButton.confirm ? "error" : (parent.hovered ? "focus" : "internalbg")
+                                                radius: Styling.radius(-4)
+                                                enableShadow: false
+                                            }
+                                            
+                                            contentItem: Text {
+                                                text: deleteButton.confirm ? "Confirm?" : ""
+                                                font.family: Config.theme.font
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: deleteButton.confirm ? Colors.overError : Colors.red
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                                
+                                                Text {
+                                                    visible: !deleteButton.confirm
+                                                    anchors.centerIn: parent
+                                                    text: Icons.trash
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 14
+                                                    color: Colors.red
+                                                }
+                                            }
+                                            
+                                            onClicked: {
+                                                if (confirm) {
+                                                    PrinterService.deletePrinter(printerCard.modelData.name);
+                                                } else {
+                                                    confirm = true;
+                                                    resetTimer.start();
+                                                }
+                                            }
+                                            
+                                            Timer {
+                                                id: resetTimer
+                                                interval: 3000
+                                                onTriggered: deleteButton.confirm = false
+                                            }
+                                            
+                                            StyledToolTip {
+                                                visible: parent.hovered && !deleteButton.confirm
+                                                tooltipText: "Delete Printer"
+                                            }
+                                        }
+
+                                        // Configure Options Button
+                                        Button {
+                                            flat: true
+                                            implicitWidth: 32
+                                            implicitHeight: 32
+                                            
+                                            background: StyledRect {
+                                                variant: parent.hovered ? "focus" : "internalbg"
+                                                radius: Styling.radius(-4)
+                                            }
+                                            
+                                            contentItem: Text {
+                                                text: Icons.gear
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                color: printerCard.item
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+                                            
+                                            onClicked: {
+                                                configurePrinterPopup.activePrinter = printerCard.modelData;
+                                                configurePrinterPopup.open();
+                                            }
+                                            
+                                            StyledToolTip {
+                                                visible: parent.hovered
+                                                tooltipText: "Configure Options"
+                                            }
+                                        }
                                     }
                                 }
 
+                                // Row 2: Status Pill & URI Address
                                 RowLayout {
-                                    spacing: 8
+                                    Layout.fillWidth: true
+                                    spacing: 12
                                     Layout.alignment: Qt.AlignVCenter
 
                                     // Status Badge
@@ -260,247 +350,17 @@ Item {
                                         }
                                     }
 
-                                    // Set Default Button
-                                    Button {
-                                        visible: !printerCard.modelData.is_default
-                                        flat: true
-                                        implicitWidth: 32
-                                        implicitHeight: 32
-                                        
-                                        background: StyledRect {
-                                            variant: parent.hovered ? "focus" : "internalbg"
-                                            radius: Styling.radius(-4)
-                                        }
-                                        
-                                        contentItem: Text {
-                                            text: Icons.accept
-                                            font.family: Icons.font
-                                            font.pixelSize: 14
-                                            color: Colors.overBackground
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
-                                        
-                                        onClicked: PrinterService.setDefaultPrinter(printerCard.modelData.name)
-                                        
-                                        StyledToolTip {
-                                            visible: parent.hovered
-                                            tooltipText: "Set as Default"
-                                        }
-                                    }
-
-                                    // Delete Printer Button
-                                    Button {
-                                        id: deleteButton
-                                        flat: true
-                                        implicitWidth: deleteButton.confirm ? 56 : 32
-                                        implicitHeight: 32
-                                        
-                                        property bool confirm: false
-                                        
-                                        background: StyledRect {
-                                            variant: deleteButton.confirm ? "error" : (parent.hovered ? "focus" : "internalbg")
-                                            radius: Styling.radius(-4)
-                                            enableShadow: false
-                                        }
-                                        
-                                        contentItem: Text {
-                                            text: deleteButton.confirm ? "Confirm?" : ""
-                                            font.family: Config.theme.font
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: deleteButton.confirm ? Colors.overError : Colors.red
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                            
-                                            Text {
-                                                visible: !deleteButton.confirm
-                                                anchors.centerIn: parent
-                                                text: Icons.trash
-                                                font.family: Icons.font
-                                                font.pixelSize: 14
-                                                color: Colors.red
-                                            }
-                                        }
-                                        
-                                        onClicked: {
-                                            if (confirm) {
-                                                PrinterService.deletePrinter(printerCard.modelData.name);
-                                            } else {
-                                                confirm = true;
-                                                resetTimer.start();
-                                            }
-                                        }
-                                        
-                                        Timer {
-                                            id: resetTimer
-                                            interval: 3000
-                                            onTriggered: deleteButton.confirm = false
-                                        }
-                                        
-                                        StyledToolTip {
-                                            visible: parent.hovered && !deleteButton.confirm
-                                            tooltipText: "Delete Printer"
-                                        }
-                                    }
-
-                                    // Expand Options Button
-                                    Button {
-                                        flat: true
-                                        implicitWidth: 32
-                                        implicitHeight: 32
-                                        
-                                        background: StyledRect {
-                                            variant: parent.hovered ? "focus" : "internalbg"
-                                            radius: Styling.radius(-4)
-                                        }
-                                        
-                                        contentItem: Text {
-                                            text: printerCard.expanded ? Icons.caretUp : Icons.caretDown
-                                            font.family: Icons.font
-                                            font.pixelSize: 14
-                                            color: printerCard.item
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
-                                        
-                                        onClicked: {
-                                            root.expandedPrinter = printerCard.expanded ? "" : printerCard.modelData.name;
-                                        }
-                                        
-                                        StyledToolTip {
-                                            visible: parent.hovered
-                                            tooltipText: printerCard.expanded ? "Hide Settings" : "Configure Options"
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Options Section (shown when expanded)
-                            ColumnLayout {
-                                id: optionsColumn
-                                visible: printerCard.expanded
-                                Layout.fillWidth: true
-                                spacing: 10
-                                Layout.topMargin: 4
-                                Layout.bottomMargin: 4
-
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 1
-                                    color: Colors.outlineVariant
-                                    opacity: 0.3
-                                }
-
-                                Repeater {
-                                    model: printerCard.modelData.options || []
-
-                                    delegate: RowLayout {
-                                        id: optionRow
-                                        required property var modelData
-                                        required property int index
-
+                                    Text {
+                                        text: printerCard.modelData.device || "No device URI"
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-2)
+                                        color: printerCard.item
+                                        opacity: 0.8
+                                        elide: Text.ElideRight
                                         Layout.fillWidth: true
-                                        spacing: 12
-
-                                        Text {
-                                            text: optionRow.modelData.label
-                                            font.family: Config.theme.font
-                                            font.pixelSize: Styling.fontSize(-1)
-                                            font.bold: true
-                                            color: printerCard.item
-                                            Layout.fillWidth: true
-                                            elide: Text.ElideRight
-                                        }
-
-                                        ComboBox {
-                                            id: choiceCombo
-                                            Layout.preferredWidth: 180
-                                            Layout.preferredHeight: 30
-
-                                            model: optionRow.modelData.choices
-                                            currentIndex: model.indexOf(optionRow.modelData.current)
-
-                                            onActivated: index => {
-                                                const val = model[index];
-                                                PrinterService.setPrinterOption(printerCard.modelData.name, optionRow.modelData.name, val);
-                                            }
-
-                                            background: StyledRect {
-                                                variant: choiceCombo.hovered ? "focus" : "internalbg"
-                                                radius: Styling.radius(-4)
-                                                enableShadow: false
-                                            }
-
-                                            contentItem: Text {
-                                                text: choiceCombo.displayText
-                                                font.family: Config.theme.font
-                                                font.pixelSize: Styling.fontSize(-2)
-                                                color: Colors.overBackground
-                                                verticalAlignment: Text.AlignVCenter
-                                                leftPadding: 8
-                                                rightPadding: 24
-                                                elide: Text.ElideRight
-                                            }
-
-                                            indicator: Text {
-                                                x: choiceCombo.width - width - 8
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                text: Icons.caretDown
-                                                font.family: Icons.font
-                                                font.pixelSize: 12
-                                                color: Colors.overBackground
-                                            }
-
-                                            popup: Popup {
-                                                y: choiceCombo.height + 2
-                                                width: choiceCombo.width
-                                                implicitHeight: Math.min(180, popupListView.contentHeight + 8)
-                                                padding: 4
-
-                                                background: StyledRect {
-                                                    variant: "popup"
-                                                    radius: Styling.radius(-2)
-                                                }
-
-                                                ListView {
-                                                    id: popupListView
-                                                    anchors.fill: parent
-                                                    clip: true
-                                                    model: choiceCombo.delegateModel
-                                                    currentIndex: choiceCombo.highlightedIndex
-                                                    ScrollIndicator.vertical: ScrollIndicator {}
-                                                }
-                                            }
-
-                                            delegate: ItemDelegate {
-                                                id: delegateItem
-                                                required property var modelData
-                                                required property int index
-
-                                                width: ListView.view.width
-                                                height: 28
-
-                                                background: StyledRect {
-                                                    variant: delegateItem.highlighted ? "focus" : "common"
-                                                    radius: Styling.radius(-4)
-                                                    enableShadow: false
-                                                }
-
-                                                contentItem: Text {
-                                                    text: delegateItem.modelData
-                                                    font.family: Config.theme.font
-                                                    font.pixelSize: Styling.fontSize(-2)
-                                                    color: Colors.overBackground
-                                                    verticalAlignment: Text.AlignVCenter
-                                                    leftPadding: 8
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
-                        }
                     }
                 }
 
@@ -516,14 +376,14 @@ Item {
             }
 
             // Tab 1: Jobs & History
-            ColumnLayout {
+            Column {
                 visible: root.currentTab === 1
-                Layout.fillWidth: true
+                width: parent.width
                 spacing: 16
 
                 // Section 1: Active Print Jobs
-                ColumnLayout {
-                    Layout.fillWidth: true
+                Column {
+                    width: parent.width
                     spacing: 8
 
                     Text {
@@ -534,19 +394,24 @@ Item {
                         color: Colors.overBackground
                     }
 
-                    Repeater {
-                        model: PrinterService.jobs
+                    Column {
+                        id: jobsColumn
+                        width: parent.width
+                        spacing: 8
 
-                        delegate: StyledRect {
-                            id: jobCard
-                            required property var modelData
-                            required property int index
+                        Repeater {
+                            model: PrinterService.jobs
 
-                            Layout.fillWidth: true
-                            height: 64
-                            variant: "common"
-                            enableShadow: false
-                            radius: Styling.radius(0)
+                            delegate: StyledRect {
+                                id: jobCard
+                                required property var modelData
+                                required property int index
+
+                                width: parent.width
+                                height: 64
+                                variant: "common"
+                                enableShadow: false
+                                radius: Styling.radius(0)
 
                             RowLayout {
                                 anchors.fill: parent
@@ -651,6 +516,7 @@ Item {
                             }
                         }
                     }
+                    }
 
                     Text {
                         visible: PrinterService.jobs.length === 0
@@ -665,8 +531,8 @@ Item {
                 }
 
                 // Section 2: Job History
-                ColumnLayout {
-                    Layout.fillWidth: true
+                Column {
+                    width: parent.width
                     spacing: 8
 
                     Text {
@@ -677,19 +543,24 @@ Item {
                         color: Colors.overBackground
                     }
 
-                    Repeater {
-                        model: PrinterService.completedJobs
+                    Column {
+                        id: historyColumn
+                        width: parent.width
+                        spacing: 8
 
-                        delegate: StyledRect {
-                            id: completedJobCard
-                            required property var modelData
-                            required property int index
+                        Repeater {
+                            model: PrinterService.completedJobs
 
-                            Layout.fillWidth: true
-                            height: 64
-                            variant: "common"
-                            enableShadow: false
-                            radius: Styling.radius(0)
+                            delegate: StyledRect {
+                                id: completedJobCard
+                                required property var modelData
+                                required property int index
+
+                                width: parent.width
+                                height: 64
+                                variant: "common"
+                                enableShadow: false
+                                radius: Styling.radius(0)
 
                             RowLayout {
                                 anchors.fill: parent
@@ -748,7 +619,7 @@ Item {
                                         anchors.fill: parent
                                         color: Colors.green
                                         opacity: 0.15
-                                        radius: parent.radius
+                                        radius: historyStatusBadge.radius
                                     }
 
                                     Text {
@@ -762,6 +633,7 @@ Item {
                                 }
                             }
                         }
+                    }
                     }
 
                     Text {
@@ -1626,6 +1498,215 @@ Item {
                             PrinterService.addPrinter(root.newName.trim(), fullUri, root.newDriver);
                         }
                         root.showAddForm = false;
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: configurePrinterPopup
+        anchors.centerIn: Overlay.overlay
+        modal: true
+        focus: true
+        dim: true
+        
+        property var activePrinter: null
+        
+        width: Math.min(500, parent.width - 32)
+        height: Math.min(450, parent.height - 32)
+        
+        background: StyledRect {
+            variant: "popup"
+            radius: Styling.radius(0)
+            enableShadow: true
+        }
+        
+        contentItem: ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 16
+            
+            // Header
+            RowLayout {
+                Layout.fillWidth: true
+                
+                Text {
+                    text: configurePrinterPopup.activePrinter ? "Configure " + configurePrinterPopup.activePrinter.name : "Configure Printer"
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(1)
+                    font.bold: true
+                    color: Colors.overBackground
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+                
+                Button {
+                    flat: true
+                    implicitWidth: 32
+                    implicitHeight: 32
+                    
+                    background: StyledRect {
+                        variant: parent.hovered ? "focus" : "internalbg"
+                        radius: Styling.radius(-4)
+                    }
+                    
+                    contentItem: Text {
+                        text: Icons.cancel
+                        font.family: Icons.font
+                        font.pixelSize: 14
+                        color: Colors.overBackground
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: configurePrinterPopup.close()
+                }
+            }
+            
+            // Divider
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Colors.outlineVariant
+                opacity: 0.3
+            }
+            
+            // Options List
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: width
+                contentHeight: optionsListColumn.implicitHeight
+                clip: true
+                
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                }
+                
+                ColumnLayout {
+                    id: optionsListColumn
+                    width: parent.width
+                    spacing: 12
+                    
+                    Repeater {
+                        model: configurePrinterPopup.activePrinter ? configurePrinterPopup.activePrinter.options : []
+                        
+                        delegate: RowLayout {
+                            id: optionRow
+                            required property var modelData
+                            required property int index
+                            
+                            Layout.fillWidth: true
+                            spacing: 12
+                            
+                            Text {
+                                text: optionRow.modelData.label
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-1)
+                                font.bold: true
+                                color: Colors.overBackground
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                            
+                            ComboBox {
+                                id: choiceCombo
+                                Layout.preferredWidth: 200
+                                Layout.preferredHeight: 32
+                                
+                                model: optionRow.modelData.choices
+                                currentIndex: model.indexOf(optionRow.modelData.current)
+                                
+                                onActivated: index => {
+                                    const val = model[index];
+                                    PrinterService.setPrinterOption(configurePrinterPopup.activePrinter.name, optionRow.modelData.name, val);
+                                }
+                                
+                                background: Rectangle {
+                                    color: choiceCombo.hovered ? Colors.surfaceContainerHigh : Colors.surfaceContainer
+                                    radius: Styling.radius(-2)
+                                    border.color: Colors.outlineVariant
+                                    border.width: 1
+                                }
+                                
+                                contentItem: Text {
+                                    text: choiceCombo.displayText
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(-2)
+                                    color: Colors.overBackground
+                                    verticalAlignment: Text.AlignVCenter
+                                    leftPadding: 10
+                                    rightPadding: 24
+                                    elide: Text.ElideRight
+                                }
+                                
+                                indicator: Text {
+                                    x: choiceCombo.width - width - 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Icons.caretDown
+                                    font.family: Icons.font
+                                    font.pixelSize: 12
+                                    color: Colors.overBackground
+                                }
+                                
+                                popup: Popup {
+                                    y: choiceCombo.height + 4
+                                    width: choiceCombo.width
+                                    implicitHeight: Math.min(180, popupListView.contentHeight + 8)
+                                    padding: 4
+                                    
+                                    background: Rectangle {
+                                        color: Colors.surfaceContainerLow
+                                        radius: Styling.radius(-1)
+                                        border.color: Colors.outlineVariant
+                                        border.width: 1
+                                    }
+                                    
+                                    ListView {
+                                        id: popupListView
+                                        anchors.fill: parent
+                                        clip: true
+                                        model: choiceCombo.delegateModel
+                                        currentIndex: choiceCombo.highlightedIndex
+                                        ScrollIndicator.vertical: ScrollIndicator {}
+                                    }
+                                }
+                                
+                                delegate: ItemDelegate {
+                                    id: delegateItem
+                                    required property var modelData
+                                    required property int index
+                                    
+                                    width: ListView.view.width - 8
+                                    height: 32
+                                    
+                                    background: Rectangle {
+                                        color: delegateItem.highlighted ? Colors.surfaceContainerHigh : "transparent"
+                                        radius: Styling.radius(-2)
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: delegateItem.modelData
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Styling.fontSize(-2)
+                                        color: Colors.overBackground
+                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: 10
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    Text {
+                        visible: !configurePrinterPopup.activePrinter || !configurePrinterPopup.activePrinter.options || configurePrinterPopup.activePrinter.options.length === 0
+                        text: "No configurable options for this printer."
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        color: Colors.overSurfaceVariant
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 16
                     }
                 }
             }
