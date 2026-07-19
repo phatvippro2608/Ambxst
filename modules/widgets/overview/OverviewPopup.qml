@@ -43,26 +43,6 @@ PanelWindow {
         id: focusGrab
         windows: [overviewPopup]
         active: overviewOpen
-
-        onCleared: {
-            // Use Qt.callLater to avoid potential race conditions
-            Qt.callLater(() => {
-                if (overviewOpen) {
-                    Visibilities.setActiveModule("");
-                }
-            });
-        }
-    }
-
-    Keys.onReleased: event => {
-        if (event.key === Qt.Key_Super || event.key === Qt.Key_Meta || event.key === Qt.Key_Alt) {
-                            if (GlobalStates.hoveredWorkspaceId !== -1) {
-                                Visibilities.setActiveModule("");
-                                Qt.callLater(() => {
-                                    AxctlService.dispatch(`workspace ${GlobalStates.hoveredWorkspaceId}`);
-                                });
-                            }
-        }
     }
 
     // Semi-transparent backdrop
