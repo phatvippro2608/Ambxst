@@ -687,7 +687,10 @@ Item {
                             if (!windowDelegate.windowData)
                                 return;
                             if (mouse.button === Qt.LeftButton && !windowDelegate.dragging) {
-                                AxctlService.dispatch(`focuswindow address:${windowDelegate.windowData.address}`);
+                                Visibilities.setActiveModule("", true);
+                                Qt.callLater(() => {
+                                    AxctlService.dispatch(`focuswindow address:${windowDelegate.windowData.address}`);
+                                });
                             } else if (mouse.button === Qt.MiddleButton) {
                                 AxctlService.dispatch(`closewindow address:${windowDelegate.windowData.address}`);
                             }
