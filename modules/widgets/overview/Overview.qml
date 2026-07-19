@@ -222,20 +222,21 @@ Item {
                     Rectangle {
                         anchors.top: parent.top
                         anchors.left: parent.left
-                        anchors.margins: 6
-                        width: 28
-                        height: 28
-                        radius: 14
-                        color: Colors.surfaceContainerHighest
+                        anchors.margins: 4
+                        width: 22
+                        height: 22
+                        radius: 11
+                        color: Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.85)
                         border.color: Styling.srItem("overprimary")
-                        border.width: 1.5
-                        z: 50
+                        border.width: 1
+                        z: 0
+                        enabled: false
 
                         Text {
                             anchors.centerIn: parent
                             text: workspaceValue.toString()
                             font.bold: true
-                            font.pixelSize: 14
+                            font.pixelSize: 11
                             font.family: Config.theme.font
                             color: Colors.onSurface
                         }
@@ -343,9 +344,12 @@ Item {
                     }
                     onWindowClicked: {
                         Visibilities.setActiveModule("", true);
-                        Qt.callLater(() => {
+                        if (windowData) {
+                            if (windowData.workspace && windowData.workspace.id) {
+                                AxctlService.dispatch(`workspace ${windowData.workspace.id}`);
+                            }
                             AxctlService.dispatch(`focuswindow address:${windowData.address}`);
-                        });
+                        }
                     }
                     onWindowClosed: {
                         AxctlService.dispatch(`closewindow address:${windowData.address}`);

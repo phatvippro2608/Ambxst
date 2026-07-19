@@ -200,20 +200,21 @@ Item {
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left
-            anchors.margins: 6
-            width: 28
-            height: 28
-            radius: 14
-            color: Colors.surfaceContainerHighest
+            anchors.margins: 4
+            width: 22
+            height: 22
+            radius: 11
+            color: Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.85)
             border.color: Styling.srItem("overprimary")
-            border.width: 1.5
-            z: 99
+            border.width: 1
+            z: 0
+            enabled: false
 
             Text {
                 anchors.centerIn: parent
                 text: root.workspaceId.toString()
                 font.bold: true
-                font.pixelSize: 14
+                font.pixelSize: 11
                 font.family: Config.theme.font
                 color: Colors.onSurface
             }
@@ -561,10 +562,9 @@ Item {
                                 if (!windowDelegate.dragging) {
                                     Visibilities.setActiveModule("", true);
                                     const winAddr = windowDelegate.windowData ? windowDelegate.windowData.address : "";
+                                    AxctlService.dispatch(`workspace ${root.workspaceId}`);
                                     if (winAddr) {
-                                        Qt.callLater(() => {
-                                            AxctlService.dispatch(`focuswindow address:${winAddr}`);
-                                        });
+                                        AxctlService.dispatch(`focuswindow address:${winAddr}`);
                                     }
                                     return;
                                 }
