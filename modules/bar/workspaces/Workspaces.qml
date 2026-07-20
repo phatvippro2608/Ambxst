@@ -123,8 +123,9 @@ Item {
 
     function workspaceLabelFontSize(value) {
         const label = String(value);
-        const shrink = label.length > 1 && label !== "10" ? (label.length - 1) * 2 : 0;
-        return Math.round(Math.max(1, Config.theme.fontSize - shrink));
+        const baseSize = Styling.fontSize(-2);
+        const shrink = label.length > 1 ? 1 : 0;
+        return Math.max(8, baseSize - shrink);
     }
 
     function getWorkspaceId(index) {
@@ -448,6 +449,7 @@ Item {
                 id: button
                 property int workspaceValue: getWorkspaceId(index)
                 Layout.fillHeight: true
+                padding: 0
                 onPressed: AxctlService.dispatch(`workspace ${workspaceValue}`)
                 width: workspaceButtonWidth
 
@@ -512,6 +514,7 @@ Item {
                         z: 3
 
                         anchors.centerIn: parent
+                        anchors.verticalCenterOffset: 1
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.family: Config.theme.font
@@ -634,6 +637,7 @@ Item {
                 id: buttonVert
                 property int workspaceValue: getWorkspaceId(index)
                 Layout.fillWidth: true
+                padding: 0
                 onPressed: AxctlService.dispatch(`workspace ${workspaceValue}`)
                 height: workspaceButtonWidth
 
@@ -698,6 +702,7 @@ Item {
                         z: 3
 
                         anchors.centerIn: parent
+                        anchors.verticalCenterOffset: 1
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         font.family: Config.theme.font
